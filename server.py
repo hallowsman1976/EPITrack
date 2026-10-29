@@ -78,9 +78,16 @@ def mask_cid(cid: str | None) -> str:
     return f"{cid[0]}-{cid[1:5]}-xxxxx-{cid[10:12]}-{cid[12]}"
 
 
-templates.env.filters.update(thai_date=thai_date, age=age_text, cid=mask_cid,
+def measure(value) -> str:
+    """ค่าที่ชั่งวัด ตัดศูนย์ท้ายทศนิยม (13.70 -> 13.7) ไม่ได้วัด = ว่าง"""
+    if value is None or value == "":
+        return ""
+    return f"{float(value):.2f}".rstrip("0").rstrip(".")
+
+
+templates.env.filters.update(thai_date=thai_date, age=age_text, cid=mask_cid, measure=measure,
                              sex=lambda v: SEX.get(str(v or ""), "-"))
-templates.env.globals.update(STATUS=schedule.STATUS, PLACES=store.PLACES, ROLES=store.ROLES,
+templates.env.globals.update(STATUS=schedule.STATUS, PLACES=store.PLACES, ROLES=store.ROLES, MEASURES=store.MEASURES,
                              ACTIONS=ACTIONS, AGE_BANDS=schedule.AGE_BANDS, version=VERSION)
 
 
@@ -258,9 +265,10 @@ def home(request: Request, q: str = ""):
     people = jhcis.persons([(a["pcucodeperson"], a["pid"]) for a in upcoming])
     for a in upcoming:
         a["person"] = people.get((a["pcucodeperson"], a["pid"]))
-    pending = history.pending_jhcis(*history.default_pending_range(today))
+    span = history.default_pending_range(today)
+    pending = len(history.pending_jhcis(*span)) + len(history.pending_growth(*span))
     return render(request, "home.html", title="ค้นหาเด็ก", active="home", q=q, results=results,
-                  upcoming=upcoming, pending_count=len(pending), in_area=jhcis.in_area, today=today)
+                  upcoming=upcoming, pending_count=pending, in_area=jhcis.in_area, today=today)
 
 
 # ---------- รายชื่อเด็ก ----------
@@ -340,7 +348,7 @@ def vaccine_options(rules: schedule.Rules, vmap: dict) -> list[dict]:
 
 
 @app.get("/person/{pcu}/{pid}")
-def person_page(request: Request, pcu: str, pid: int, edit: int = 0):
+def person_page(request: Request, pcu: str, pid: int, edit: int = 0, gedit: int = 0):
     try:
         person = load_person(pcu, pid)
     except store.NotFound as exc:
@@ -353,11 +361,15 @@ def person_page(request: Request, pcu: str, pid: int, edit: int = 0):
     editing = store.get_vaccination(edit) if edit else None
     if editing and (editing["pcucodeperson"], editing["pid"]) != (pcu, pid):
         editing = None
+    gediting = store.get_growth(gedit) if gedit else None
+    if gediting and (gediting["pcucodeperson"], gediting["pid"]) != (pcu, pid):
+        gediting = None
     return render(request, "person.html", title=person["name"], active="children", c=c, p=person,
                   options=vaccine_options(rules, vmap), today=today, in_area=jhcis.in_area(person),
                   suggest_date=suggest_date, suggest_items=suggest_items,
                   appointments=store.appointments_for(pcu, pid), jhcis_appointments=jhcis.epi_appointments(pcu, pid),
-                  editing=editing, default_giver=request.state.user["display_name"])
+                  editing=editing, default_giver=request.state.user["display_name"],
+                  growth=history.growth(pcu, pid), gediting=gediting)
 
 
 def vaccination_form(form) -> dict:
@@ -374,14 +386,34 @@ def vaccination_form(form) -> dict:
     }
 
 
+def growth_form(form, prefix: str = "", **override) -> dict:
+    data = {k: form.get(prefix + k, "") for k in store.MEASURES}
+    data.update(date_checked=parse_date(form.get("date_checked")), place=form.get("place", ""),
+                note=form.get(prefix + "note", ""))
+    data.update(override)
+    return data
+
+
 @app.post("/person/{pcu}/{pid}/vaccinations")
 async def vaccination_add(request: Request, pcu: str, pid: int):
+    """บันทึกการฉีด และการชั่งวัดวันเดียวกันถ้ากรอกมา (ตรวจค่าชั่งวัดก่อน เพื่อไม่ให้บันทึกครึ่งเดียว)"""
     form = await request.form()
+    data = vaccination_form(form)
+    measured = growth_form(form, "g_", date_checked=data["date_given"], place=data["place"], note="")
     try:
         load_person(pcu, pid)
-        store.add_vaccination(pcu, pid, vaccination_form(form), request.state.user["id"])
+        if store.has_measures(measured):
+            store.clean_growth(measured)
+        store.add_vaccination(pcu, pid, data, request.state.user["id"])
     except (ValueError, store.NotFound) as exc:
         return back(person_url(pcu, pid), err=str(exc), anchor="record")
+    if store.has_measures(measured):
+        try:
+            store.add_growth(pcu, pid, measured, request.state.user["id"])
+        except ValueError as exc:
+            return back(person_url(pcu, pid), msg="บันทึกการฉีดแล้ว", err=f"ไม่ได้บันทึกการชั่งวัด: {exc}",
+                        anchor="growth")
+        return back(person_url(pcu, pid), msg="บันทึกการฉีดและการชั่งวัดแล้ว", anchor="records")
     return back(person_url(pcu, pid), msg="บันทึกการฉีดแล้ว", anchor="records")
 
 
@@ -420,7 +452,58 @@ def vaccination_history(request: Request, record_id: int):
         return render(request, "message.html", 404, title="ไม่พบข้อมูล", text=str(exc))
     person = jhcis.person(row["pcucodeperson"], row["pid"])
     return render(request, "record_history.html", title="ประวัติการแก้ไขรายการฉีด", active="children",
+                  subject=f"{row['vaccine_code']} วันที่ {thai_date(row['date_given'], False)}",
                   row=row, p=person, logs=store.audit_for("vaccination", record_id))
+
+
+# ---------- การชั่งวัด ----------
+@app.post("/person/{pcu}/{pid}/growth")
+async def growth_add(request: Request, pcu: str, pid: int):
+    form = await request.form()
+    try:
+        load_person(pcu, pid)
+        store.add_growth(pcu, pid, growth_form(form), request.state.user["id"])
+    except (ValueError, store.NotFound) as exc:
+        return back(person_url(pcu, pid), err=str(exc), anchor="growth")
+    return back(person_url(pcu, pid), msg="บันทึกการชั่งวัดแล้ว", anchor="growth")
+
+
+@app.post("/growth/{record_id}/edit")
+async def growth_edit(request: Request, record_id: int):
+    form = await request.form()
+    try:
+        row = store.get_growth(record_id)
+        url = person_url(row["pcucodeperson"], row["pid"])
+        store.update_growth(record_id, growth_form(form), form.get("reason", ""), request.state.user["id"])
+    except store.NotFound as exc:
+        return back("/", err=str(exc))
+    except ValueError as exc:
+        return back(f"{url}?gedit={record_id}", err=str(exc), anchor="growth")
+    return back(url, msg="แก้ไขการชั่งวัดแล้ว", anchor="growth")
+
+
+@app.post("/growth/{record_id}/delete")
+def growth_delete(request: Request, record_id: int, reason: str = Form("")):
+    try:
+        row = store.get_growth(record_id)
+        store.hide_growth(record_id, reason, request.state.user["id"])
+    except store.NotFound as exc:
+        return back("/", err=str(exc))
+    except ValueError as exc:
+        return back(person_url(row["pcucodeperson"], row["pid"]), err=str(exc), anchor="growth")
+    return back(person_url(row["pcucodeperson"], row["pid"]), msg="ลบการชั่งวัดแล้ว", anchor="growth")
+
+
+@app.get("/growth/{record_id}/history")
+def growth_history(request: Request, record_id: int):
+    try:
+        row = store.get_growth(record_id)
+    except store.NotFound as exc:
+        return render(request, "message.html", 404, title="ไม่พบข้อมูล", text=str(exc))
+    person = jhcis.person(row["pcucodeperson"], row["pid"])
+    return render(request, "record_history.html", title="ประวัติการแก้ไขการชั่งวัด", active="children",
+                  subject=f"การชั่งวัดวันที่ {thai_date(row['date_checked'], False)}",
+                  row=row, p=person, logs=store.audit_for("growth", record_id))
 
 
 # ---------- นัด ----------
@@ -467,7 +550,8 @@ def pending_page(request: Request, start: str = "", end: str = ""):
     items = history.pending_jhcis(d_start, d_end)
     names = {v["code"]: v["name"] for v in jhcis.vaccines()}
     return render(request, "pending.html", title="รอลง JHCIS", active="pending", items=items, start=d_start,
-                  end=d_end, names=names, PENDING_STATUS=PENDING_STATUS)
+                  end=d_end, names=names, PENDING_STATUS=PENDING_STATUS,
+                  growth_items=history.pending_growth(d_start, d_end))
 
 
 # ---------- ผู้ดูแล ----------

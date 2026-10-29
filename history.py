@@ -156,5 +156,44 @@ def pending_jhcis(start: date, end: date) -> list[PendingItem]:
     return items
 
 
+@dataclass
+class GrowthRow:
+    """การชั่งวัดหนึ่งครั้ง จาก JHCIS หรือแอป"""
+    source: str  # "jhcis" | "app"
+    date: date
+    values: dict  # weight, height, head, teeth, teeth_decayed (None = ไม่ได้วัด)
+    app: dict | None = None
+    in_jhcis: bool = False  # รายการในแอปที่พบใน JHCIS วันเดียวกันแล้ว
+
+
+def growth(pcucodeperson: str, pid: int) -> list[GrowthRow]:
+    """ประวัติการชั่งวัด ใหม่สุดก่อน รายการในแอปที่ JHCIS มีวันเดียวกันแล้วแสดงคู่กัน ไม่รวมเป็นแถวเดียว
+    (ค่าอาจต่างกันได้ ให้คนเห็นทั้งสองแหล่ง)"""
+    jrows = jhcis.growth_history([(pcucodeperson, pid)])
+    jdates = {r["visitdate"] for r in jrows}
+    rows = [GrowthRow("jhcis", r["visitdate"], {k: r[k] for k in store.MEASURES}) for r in jrows]
+    rows += [GrowthRow("app", r["date_checked"], {k: r[k] for k in store.MEASURES}, app=r,
+                       in_jhcis=r["date_checked"] in jdates) for r in store.growth_for(pcucodeperson, pid)]
+    return sorted(rows, key=lambda g: (g.date, g.source == "app"), reverse=True)
+
+
+@dataclass
+class PendingGrowth:
+    """การชั่งวัดที่นี่ในแอป ที่ยังไม่พบใน visitnutrition วันเดียวกัน"""
+    record: dict
+    person: dict | None
+
+
+def pending_growth(start: date, end: date) -> list[PendingGrowth]:
+    rows = store.here_growth(start, end)
+    if not rows:
+        return []
+    keys = list({(r["pcucodeperson"], r["pid"]) for r in rows})
+    people = jhcis.persons(keys)
+    done = {(r["pcucodeperson"], r["pid"], r["visitdate"]) for r in jhcis.growth_history(keys)}
+    return [PendingGrowth(r, people.get((r["pcucodeperson"], r["pid"]))) for r in rows
+            if (r["pcucodeperson"], r["pid"], r["date_checked"]) not in done]
+
+
 def default_pending_range(today: date) -> tuple[date, date]:
     return today - timedelta(days=90), today

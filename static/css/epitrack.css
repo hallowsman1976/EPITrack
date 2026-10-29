@@ -40,6 +40,10 @@
 .chips button.chip { cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; }
 .chips button.chip:hover { border-color: var(--accent); }
 [hidden] { display: none !important; }
+.measure-box { border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); padding: 10px 12px; }
+.measure-box > summary { cursor: pointer; font-weight: 600; }
+.measure-box[open] > summary { margin-bottom: 10px; }
+.measure-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .json-editor { font-family: ui-monospace, Consolas, monospace; font-size: 13px; line-height: 1.5; min-height: 360px; resize: vertical; }
 .search-form .grow { flex: 1; }
 
@@ -52,7 +56,7 @@
 .slip-date { font-size: 20px; font-weight: 700; }
 
 @media (max-width: 900px) {
-  .record-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .record-grid, .measure-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {

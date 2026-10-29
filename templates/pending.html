@@ -2,17 +2,17 @@
 {% block content %}
 <div class="page-head">
   <div><h1>รอลง JHCIS</h1>
-    <p>การฉีดที่นี่ที่บันทึกในแอป แต่ยังไม่พบวัคซีนชุดเดียวกันในวันเดียวกันใน JHCIS · คีย์ใน JHCIS แล้วรายการจะหายจากหน้านี้เอง</p></div>
+    <p>การฉีดและการชั่งวัดที่นี่ที่บันทึกในแอป แต่ยังไม่พบข้อมูลวันเดียวกันใน JHCIS · คีย์ใน JHCIS แล้วรายการจะหายจากหน้านี้เอง</p></div>
 </div>
 
 <form class="card card-pad inline-form" method="get" action="/pending">
-  <label class="field"><span>ฉีดตั้งแต่</span><input class="input" type="date" name="start" value="{{ start }}"></label>
+  <label class="field"><span>ตั้งแต่</span><input class="input" type="date" name="start" value="{{ start }}"></label>
   <label class="field"><span>ถึง</span><input class="input" type="date" name="end" value="{{ end }}"></label>
   <button class="btn btn-primary" type="submit"><i class="ph ph-funnel"></i>แสดง</button>
 </form>
 
 <div class="card" style="margin-top:16px">
-  <div class="card-head"><h2>{{ items|length }} รายการ</h2><span class="muted small">{{ start|thai_date }} – {{ end|thai_date }}</span></div>
+  <div class="card-head"><h2><i class="ph ph-syringe"></i>การฉีด {{ items|length }} รายการ</h2><span class="muted small">{{ start|thai_date }} – {{ end|thai_date }}</span></div>
   {% if items %}
   <div class="table-wrap"><table class="table">
     <thead><tr><th>วันที่ฉีด</th><th>ชื่อ</th><th>วัคซีนที่ต้องคีย์</th><th>lot</th><th>สถานะ</th><th>ผู้บันทึก</th></tr></thead>
@@ -33,6 +33,29 @@
   </table></div>
   {% else %}
   <div class="empty"><i class="ph ph-check-circle"></i><div>ลง JHCIS ครบแล้วในช่วงนี้</div></div>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top:16px">
+  <div class="card-head"><h2><i class="ph ph-ruler"></i>การชั่งวัด {{ growth_items|length }} รายการ</h2>
+    <span class="muted small">ชั่งวัดที่นี่ แต่ยังไม่พบโภชนาการ (visitnutrition) วันเดียวกันใน JHCIS</span></div>
+  {% if growth_items %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>วันที่</th><th>ชื่อ</th>{% for key, (label, unit, lo, hi) in MEASURES.items() %}<th class="r">{{ label }} <span class="muted small">({{ unit }})</span></th>{% endfor %}<th>ผู้บันทึก</th></tr></thead>
+    <tbody>
+    {% for it in growth_items %}{% set r = it.record %}
+      <tr>
+        <td class="nowrap">{{ r.date_checked|thai_date }}</td>
+        <td>{% if it.person %}<a class="strong" href="/person/{{ r.pcucodeperson }}/{{ r.pid }}#growth">{{ it.person.name }}</a>
+          <div class="muted small">HN {{ r.pid }} · {{ it.person.idcard|cid }}</div>{% else %}HN {{ r.pid }}{% endif %}</td>
+        {% for key in MEASURES %}<td class="num r">{{ r[key]|measure or '-' }}</td>{% endfor %}
+        <td class="small">{{ r.created_by_name or '-' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="empty small"><div>ลง JHCIS ครบแล้วในช่วงนี้</div></div>
   {% endif %}
 </div>
 {% endblock %}

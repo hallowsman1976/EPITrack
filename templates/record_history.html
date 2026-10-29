@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="page-head">
-  <div><h1>ประวัติการแก้ไขรายการฉีด</h1>
-    <p>{{ row.vaccine_code }} วันที่ {{ row.date_given|thai_date(false) }} · {% if p %}<a href="/person/{{ p.pcucodeperson }}/{{ p.pid }}">{{ p.name }}</a>{% endif %}
+  <div><h1>{{ title }}</h1>
+    <p>{{ subject }} · {% if p %}<a href="/person/{{ p.pcucodeperson }}/{{ p.pid }}">{{ p.name }}</a>{% endif %}
     {% if row.deleted_at %} · <span class="badge danger">ลบแล้ว: {{ row.delete_reason }}</span>{% endif %}</p></div>
 </div>
 <div class="card">

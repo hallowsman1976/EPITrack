@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="page-head"><div><h1>ประวัติการแก้ไข</h1><p>200 รายการล่าสุด · ทุกการเพิ่ม แก้ไข ลบ ในแอป</p></div></div>
-{% set ENTITY = {"vaccination": "รายการฉีด", "appointment": "นัด", "user": "ผู้ใช้", "schedule": "ตารางวัคซีน", "vaccine_map": "mapping"} %}
+{% set ENTITY = {"vaccination": "รายการฉีด", "appointment": "นัด", "user": "ผู้ใช้", "schedule": "ตารางวัคซีน", "vaccine_map": "mapping", "growth": "การชั่งวัด"} %}
 <div class="card">
   <div class="table-wrap"><table class="table mini">
     <thead><tr><th>เมื่อ</th><th>ผู้ทำ</th><th>ข้อมูล</th><th>การกระทำ</th><th>เหตุผล</th></tr></thead>
@@ -11,7 +11,7 @@
         <td class="nowrap">{{ log.at|thai_date }} {{ log.at.strftime('%H:%M') }}</td>
         <td>{{ log.display_name or '-' }}</td>
         <td>{{ ENTITY.get(log.entity, log.entity) }}
-          {% if log.entity == 'vaccination' %}<a class="code" href="/vaccinations/{{ log.entity_id }}/history">#{{ log.entity_id }}</a>{% elif log.entity_id != '-' %}<span class="code">{{ log.entity_id }}</span>{% endif %}</td>
+          {% if log.entity == 'vaccination' %}<a class="code" href="/vaccinations/{{ log.entity_id }}/history">#{{ log.entity_id }}</a>{% elif log.entity == 'growth' %}<a class="code" href="/growth/{{ log.entity_id }}/history">#{{ log.entity_id }}</a>{% elif log.entity_id != '-' %}<span class="code">{{ log.entity_id }}</span>{% endif %}</td>
         <td>{{ ACTIONS.get(log.action, log.action) }}</td>
         <td class="small">{{ log.reason or '' }}</td>
       </tr>

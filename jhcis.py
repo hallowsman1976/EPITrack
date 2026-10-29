@@ -4,6 +4,7 @@
 - person -> house -> village   คน วันเกิด เพศ ประเภทการอยู่อาศัย (typelive) การจำหน่าย (dischargetype)
 - visitepi                     ประวัติการฉีดวัคซีน (hosservice = หน่วยที่ฉีด)
 - visitepiappoint              นัดฉีดวัคซีนใน JHCIS (แสดงประกอบเท่านั้น)
+- visit -> visitnutrition      น้ำหนัก ส่วนสูง เส้นรอบศีรษะ ฟันขึ้น/ฟันผุ
 - cdrug (drugtype 05)          รหัสและชื่อวัคซีน
 - chospital                    ชื่อหน่วยบริการ
 """
@@ -142,6 +143,24 @@ def epi_history(keys: list[tuple[str, int]]) -> list[dict]:
             FROM visitepi e LEFT JOIN cdrug d ON d.drugcode = e.vaccinecode
             WHERE ({cond}) AND e.vaccinecode <> ''
             ORDER BY e.dateepi
+            """,
+            [v for k in part for v in k],
+        )
+    return out
+
+
+def growth_history(keys: list[tuple[str, int]]) -> list[dict]:
+    """การชั่งวัดจาก visitnutrition ของคนเหล่านี้ (ผูกกับครั้งรับบริการใน visit)"""
+    out = []
+    for part in _chunks(keys):
+        cond = " OR ".join(["(v.pcucodeperson = %s AND v.pid = %s)"] * len(part))
+        out += q(
+            f"""
+            SELECT v.pcucodeperson, v.pid, v.visitdate, n.weight, n.tall AS height, n.headcycle AS head,
+                   n.toothnew AS teeth, n.toothcorrupt AS teeth_decayed
+            FROM visit v JOIN visitnutrition n ON n.pcucode = v.pcucode AND n.visitno = v.visitno
+            WHERE {cond}
+            ORDER BY v.visitdate
             """,
             [v for k in part for v in k],
         )

@@ -9,7 +9,7 @@ import os
 import sys
 from pathlib import Path
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 FROZEN = getattr(sys, "frozen", False)
 RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))

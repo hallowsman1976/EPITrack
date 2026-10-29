@@ -1,7 +1,7 @@
-"""ฐานข้อมูลของแอป (epitrack): รายการฉีด นัด ผู้ใช้ mapping ตารางวัคซีน และประวัติการแก้ไข
+"""ฐานข้อมูลของแอป (epitrack): รายการฉีด การชั่งวัด นัด ผู้ใช้ mapping ตารางวัคซีน และประวัติการแก้ไข
 
 ทุกการเพิ่ม แก้ หรือซ่อนข้อมูล บันทึกลง audit_log ใน transaction เดียวกัน
-การลบรายการฉีดและนัดเป็นการซ่อน (deleted_at) ไม่ลบจริง
+การลบรายการฉีด การชั่งวัด และนัด เป็นการซ่อน (deleted_at) ไม่ลบจริง
 MySQL 5.6: ไม่มีชนิด JSON จึงเก็บเป็น MEDIUMTEXT (docs/adr/0002)
 """
 
@@ -25,6 +25,16 @@ ROLES = {"admin": "ผู้ดูแล", "staff": "เจ้าหน้าท
 
 VACCINATION_FIELDS = ("vaccine_code", "date_given", "lot_no", "expire_date", "manufacturer",
                       "place", "place_note", "giver", "note")
+
+# ค่าที่ชั่งวัด: ชื่อ -> (ข้อความ, หน่วย, ต่ำสุด, สูงสุด) ใช้ตรวจค่าที่พิมพ์ผิด
+MEASURES = {
+    "weight": ("น้ำหนัก", "กก.", 0.5, 150),
+    "height": ("ส่วนสูง", "ซม.", 30, 220),
+    "head": ("เส้นรอบศีรษะ", "ซม.", 25, 65),
+    "teeth": ("ฟันขึ้น", "ซี่", 0, 32),
+    "teeth_decayed": ("ฟันผุ", "ซี่", 0, 32),
+}
+GROWTH_FIELDS = ("date_checked", *MEASURES, "place", "note")
 
 # แต่ละรายการคือคำสั่งของ schema เวอร์ชันนั้น เพิ่มต่อท้ายเท่านั้น ห้ามแก้ของเดิม
 MIGRATIONS: list[list[str]] = [
@@ -100,6 +110,30 @@ MIGRATIONS: list[list[str]] = [
             after_data MEDIUMTEXT,
             KEY entity (entity, entity_id),
             KEY at (at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""",
+    ],
+    [
+        """CREATE TABLE growth_checks (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            pcucodeperson CHAR(5) NOT NULL,
+            pid INT NOT NULL,
+            date_checked DATE NOT NULL,
+            weight DECIMAL(6,2) NULL,
+            height DECIMAL(6,2) NULL,
+            head DECIMAL(5,1) NULL,
+            teeth TINYINT NULL,
+            teeth_decayed TINYINT NULL,
+            place VARCHAR(16) NOT NULL,
+            note VARCHAR(255) NOT NULL DEFAULT '',
+            created_at DATETIME NOT NULL,
+            created_by INT NOT NULL,
+            updated_at DATETIME NULL,
+            updated_by INT NULL,
+            deleted_at DATETIME NULL,
+            deleted_by INT NULL,
+            delete_reason VARCHAR(255) NULL,
+            KEY person (pcucodeperson, pid),
+            KEY checked (date_checked)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""",
     ],
 ]
@@ -486,6 +520,120 @@ def recent_lots(vaccine_code: str, limit: int = 5) -> list[dict]:
         "FROM vaccinations WHERE vaccine_code = %s AND place = 'here' AND deleted_at IS NULL AND lot_no <> '' "
         "GROUP BY lot_no ORDER BY last_used DESC LIMIT %s",
         (vaccine_code, limit),
+    )
+
+
+# ---------- การชั่งวัด (น้ำหนัก ส่วนสูง เส้นรอบศีรษะ ฟัน) ----------
+def _growth_snapshot(row: dict) -> dict:
+    """ค่าเดิมจากฐานข้อมูลสำหรับประวัติการแก้ไข (Decimal -> float ให้เทียบกับค่าใหม่ได้ตรง)"""
+    return {k: float(row[k]) if k in ("weight", "height", "head") and row[k] is not None else row[k]
+            for k in GROWTH_FIELDS}
+
+
+def has_measures(data: dict) -> bool:
+    return any(data.get(k) not in (None, "") for k in MEASURES)
+
+
+def clean_growth(data: dict) -> dict:
+    """ตรวจค่าที่ชั่งวัด throw ValueError ถ้าไม่มีค่าเลยหรือค่าอยู่นอกช่วงที่เป็นไปได้"""
+    row = {"date_checked": data.get("date_checked"), "place": data.get("place"),
+           "note": (data.get("note") or "").strip()[:255]}
+    if not isinstance(row["date_checked"], date):
+        raise ValueError("ใส่วันที่ชั่งวัด")
+    if row["date_checked"] > date.today():
+        raise ValueError("วันที่ชั่งวัดเป็นวันในอนาคตไม่ได้")
+    if row["place"] not in PLACES:
+        raise ValueError("เลือกสถานที่ชั่งวัด")
+    for key, (label, unit, lo, hi) in MEASURES.items():
+        raw = data.get(key)
+        if raw in (None, ""):
+            row[key] = None
+            continue
+        try:
+            value = float(raw) if key in ("weight", "height", "head") else int(raw)
+        except (TypeError, ValueError):
+            raise ValueError(f"{label} ต้องเป็นตัวเลข") from None
+        if not lo <= value <= hi:
+            raise ValueError(f"{label} {raw} {unit} อยู่นอกช่วงที่เป็นไปได้ ({lo}–{hi} {unit}) ตรวจสอบอีกครั้ง")
+        row[key] = value
+    if not has_measures(row):
+        raise ValueError("ใส่ค่าที่ชั่งวัดอย่างน้อย 1 ค่า")
+    if row["teeth"] is not None and row["teeth_decayed"] is not None and row["teeth_decayed"] > row["teeth"]:
+        raise ValueError("ฟันผุมากกว่าจำนวนฟันที่ขึ้นไม่ได้")
+    return {k: row[k] for k in GROWTH_FIELDS}
+
+
+def add_growth(pcucodeperson: str, pid: int, data: dict, user_id: int) -> int:
+    row = clean_growth(data)
+    with tx() as cur:
+        cur.execute("SELECT id FROM growth_checks WHERE pcucodeperson = %s AND pid = %s AND date_checked = %s "
+                    "AND deleted_at IS NULL", (pcucodeperson, pid, row["date_checked"]))
+        if cur.fetchone():
+            raise ValueError("มีการชั่งวัดของวันนี้อยู่แล้ว แก้ไขรายการเดิมแทน")
+        cols = ", ".join(GROWTH_FIELDS)
+        cur.execute(
+            f"INSERT INTO growth_checks (pcucodeperson, pid, {cols}, created_at, created_by) "
+            f"VALUES (%s, %s, {', '.join(['%s'] * len(GROWTH_FIELDS))}, %s, %s)",
+            (pcucodeperson, pid, *row.values(), datetime.now(), user_id),
+        )
+        new_id = cur.lastrowid
+        _audit(cur, user_id, "growth", new_id, "create", after={"pcucodeperson": pcucodeperson, "pid": pid, **row})
+    return new_id
+
+
+def get_growth(record_id: int) -> dict:
+    rows = query("SELECT * FROM growth_checks WHERE id = %s", (record_id,))
+    if not rows:
+        raise NotFound("ไม่พบรายการชั่งวัด")
+    return rows[0]
+
+
+def update_growth(record_id: int, data: dict, reason: str, user_id: int) -> None:
+    if not reason.strip():
+        raise ValueError("ใส่เหตุผลของการแก้ไข")
+    row = clean_growth(data)
+    with tx() as cur:
+        cur.execute("SELECT * FROM growth_checks WHERE id = %s AND deleted_at IS NULL FOR UPDATE", (record_id,))
+        before = cur.fetchone()
+        if not before:
+            raise NotFound("ไม่พบรายการชั่งวัด หรือถูกลบไปแล้ว")
+        sets = ", ".join(f"{k} = %s" for k in GROWTH_FIELDS)
+        cur.execute(f"UPDATE growth_checks SET {sets}, updated_at = %s, updated_by = %s WHERE id = %s",
+                    (*row.values(), datetime.now(), user_id, record_id))
+        _audit(cur, user_id, "growth", record_id, "update",
+               before=_growth_snapshot(before), after=row, reason=reason.strip())
+
+
+def hide_growth(record_id: int, reason: str, user_id: int) -> dict:
+    if not reason.strip():
+        raise ValueError("ใส่เหตุผลของการลบ")
+    with tx() as cur:
+        cur.execute("SELECT * FROM growth_checks WHERE id = %s AND deleted_at IS NULL FOR UPDATE", (record_id,))
+        before = cur.fetchone()
+        if not before:
+            raise NotFound("ไม่พบรายการชั่งวัด หรือถูกลบไปแล้ว")
+        cur.execute("UPDATE growth_checks SET deleted_at = %s, deleted_by = %s, delete_reason = %s WHERE id = %s",
+                    (datetime.now(), user_id, reason.strip(), record_id))
+        _audit(cur, user_id, "growth", record_id, "delete",
+               before=_growth_snapshot(before), reason=reason.strip())
+    return before
+
+
+def growth_for(pcucodeperson: str, pid: int) -> list[dict]:
+    return query(
+        "SELECT g.*, u.display_name AS created_by_name FROM growth_checks g LEFT JOIN users u ON u.id = g.created_by "
+        "WHERE g.pcucodeperson = %s AND g.pid = %s AND g.deleted_at IS NULL ORDER BY g.date_checked, g.id",
+        (pcucodeperson, pid),
+    )
+
+
+def here_growth(start: date, end: date) -> list[dict]:
+    """การชั่งวัดที่ทำที่นี่ในช่วงวันที่ (ใช้หาที่ยังไม่ลง JHCIS)"""
+    return query(
+        "SELECT g.*, u.display_name AS created_by_name FROM growth_checks g LEFT JOIN users u ON u.id = g.created_by "
+        "WHERE g.place = 'here' AND g.deleted_at IS NULL AND g.date_checked BETWEEN %s AND %s "
+        "ORDER BY g.date_checked, g.id",
+        (start, end),
     )
 
 

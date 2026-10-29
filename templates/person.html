@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
+{% macro measure_inputs(prefix, values) %}
+  {% set steps = {"weight": "0.01", "height": "0.1", "head": "0.1", "teeth": "1", "teeth_decayed": "1"} %}
+  {% for key, (label, unit, lo, hi) in MEASURES.items() %}
+  <label class="field"><span>{{ label }} ({{ unit }})</span>
+    <input class="input num" type="number" name="{{ prefix }}{{ key }}" step="{{ steps[key] }}" min="{{ lo }}" max="{{ hi }}"
+           value="{{ values.get(key)|measure }}" inputmode="decimal"></label>
+  {% endfor %}
+{% endmacro %}
 <div class="page-head">
   <div>
     <h1>{{ p.name }}</h1>
@@ -85,12 +93,69 @@
       {% endif %}
     </div>
     <div class="chips" data-lots></div>
+    {% if not editing %}
+    <details class="measure-box">
+      <summary><i class="ph ph-ruler"></i> ชั่งวัดวันนี้ด้วย (น้ำหนัก ส่วนสูง เส้นรอบศีรษะ ฟัน) <span class="muted small">ไม่บังคับ</span></summary>
+      <div class="form-grid measure-grid">{{ measure_inputs("g_", {}) }}</div>
+    </details>
+    {% endif %}
     <div class="actions">
       <button class="btn btn-primary" type="submit"><i class="ph ph-floppy-disk"></i>{{ 'บันทึกการแก้ไข' if editing else 'บันทึกการฉีด' }}</button>
     </div>
     <p class="hint">ฉีดที่นี่แล้วต้องลงใน JHCIS ด้วย รายการที่ยังไม่พบใน JHCIS จะอยู่ในหน้า "รอลง JHCIS"</p>
   </div>
 </form>
+
+{# ---------- การชั่งวัด ---------- #}
+{% set g = gediting or {} %}
+<div class="card" id="growth" style="margin-top:16px">
+  <div class="card-head"><h2><i class="ph ph-ruler"></i>การชั่งวัด</h2><span class="muted small">JHCIS + แอป · {{ growth|length }} ครั้ง</span></div>
+  <form class="card-pad stack" method="post" data-busy
+        action="{{ '/growth/%d/edit'|format(gediting.id) if gediting else '/person/%s/%d/growth'|format(p.pcucodeperson, p.pid) }}">
+    {% if gediting %}<div class="small"><strong>แก้ไขการชั่งวัดวันที่ {{ g.date_checked|thai_date }}</strong>
+      <a class="btn btn-ghost small" href="/person/{{ p.pcucodeperson }}/{{ p.pid }}#growth">ยกเลิกการแก้ไข</a></div>{% endif %}
+    <div class="form-grid measure-grid">
+      <label class="field"><span>วันที่ชั่งวัด</span>
+        <input class="input" type="date" name="date_checked" value="{{ g.date_checked or today }}" max="{{ today }}" required></label>
+      {{ measure_inputs("", g) }}
+      <label class="field"><span>สถานที่</span><div class="select-wrap"><select class="input" name="place">
+        {% for key, label in PLACES.items() %}<option value="{{ key }}" {% if (g.place or 'here') == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select></div></label>
+      <label class="field span-2"><span>หมายเหตุ</span><input class="input" name="note" value="{{ g.note or '' }}"></label>
+      {% if gediting %}<label class="field span-2"><span>เหตุผลของการแก้ไข (จำเป็น)</span><input class="input" name="reason" required></label>{% endif %}
+    </div>
+    <div class="actions"><button class="btn btn-primary" type="submit"><i class="ph ph-floppy-disk"></i>{{ 'บันทึกการแก้ไข' if gediting else 'บันทึกการชั่งวัด' }}</button></div>
+  </form>
+  {% if growth %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>วันที่</th><th>อายุ</th>{% for key, (label, unit, lo, hi) in MEASURES.items() %}<th class="r">{{ label }} <span class="muted small">({{ unit }})</span></th>{% endfor %}<th>ที่มา</th><th></th></tr></thead>
+    <tbody>
+    {% for row in growth %}
+      <tr>
+        <td class="nowrap">{{ row.date|thai_date }}</td>
+        <td class="nowrap small">{{ p.birth|age(row.date) }}</td>
+        {% for key in MEASURES %}<td class="num r">{{ row['values'][key]|measure or '-' }}</td>{% endfor %}
+        <td>{% if row.source == 'jhcis' %}<span class="badge">JHCIS</span>{% else %}<span class="badge ok">แอป</span>
+          {% if row.app.place == 'here' and not row.in_jhcis %}<div class="small text-warn">ยังไม่ลง JHCIS</div>{% elif row.app.place != 'here' %}<div class="muted small">{{ PLACES[row.app.place] }}</div>{% endif %}{% endif %}</td>
+        <td class="nowrap">
+          {% if row.app %}
+          <a class="icon-btn" href="?gedit={{ row.app.id }}#growth" title="แก้ไข" aria-label="แก้ไข"><i class="ph ph-pencil-simple"></i></a>
+          <a class="icon-btn" href="/growth/{{ row.app.id }}/history" title="ประวัติการแก้ไข" aria-label="ประวัติการแก้ไข"><i class="ph ph-clock-counter-clockwise"></i></a>
+          <details class="dropdown item-menu">
+            <summary class="icon-btn" title="ลบ" aria-label="ลบ"><i class="ph ph-trash"></i></summary>
+            <form class="dropdown-menu inline-form" method="post" action="/growth/{{ row.app.id }}/delete" data-confirm="ลบการชั่งวัดวันที่ {{ row.date|thai_date }}?">
+              <input class="input" name="reason" placeholder="เหตุผลที่ลบ" required>
+              <button class="btn small" type="submit">ลบ</button>
+            </form>
+          </details>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+</div>
 
 {# ---------- ประวัติวัคซีน ---------- #}
 <div class="card" id="records" style="margin-top:16px">
