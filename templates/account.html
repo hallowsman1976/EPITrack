@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><h1>บัญชีของฉัน</h1><p>{{ user.display_name }} · {{ user.username }} · {{ ROLES[user.role] }}</p></div></div>
+<form class="card card-pad stack narrow" method="post" action="/account" data-busy autocomplete="off">
+  <h2><i class="ph ph-key"></i> เปลี่ยนรหัสผ่าน</h2>
+  <label class="field"><span>รหัสผ่านเดิม</span><input class="input" name="old" type="password" required autocomplete="current-password"></label>
+  <label class="field"><span>รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)</span><input class="input" name="new" type="password" minlength="6" required autocomplete="new-password"></label>
+  <label class="field"><span>ยืนยันรหัสผ่านใหม่</span><input class="input" name="new2" type="password" minlength="6" required autocomplete="new-password"></label>
+  <div class="actions"><button class="btn btn-primary" type="submit"><i class="ph ph-floppy-disk"></i>บันทึก</button></div>
+</form>
+{% endblock %}

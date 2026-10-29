@@ -1,0 +1,71 @@
+/* EPITrack — ส่วนเพิ่มจาก app.css (ใช้ token เดียวกัน) */
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.flash { margin-bottom: 16px; }
+.narrow { max-width: 480px; }
+.plain-list { margin: 8px 0 0; padding-left: 18px; }
+.plain-list li { margin: 2px 0; }
+
+/* หน้าเปล่า (ล็อกอิน / สร้างผู้ดูแล / ใบนัด) */
+.bare { min-height: 100vh; padding: 48px 16px; background: var(--bg); }
+.bare > .flash { max-width: 420px; margin: 0 auto 16px; }
+.auth-card { max-width: 420px; margin: 0 auto; }
+.auth-card h1 { font-size: 20px; margin: 0; }
+.auth-brand { display: flex; align-items: center; gap: 10px; }
+
+/* เมนูผู้ใช้ */
+.user-menu > summary { list-style: none; }
+.user-menu > summary::-webkit-details-marker { display: none; }
+.user-menu .dropdown-menu { right: 0; left: auto; min-width: 220px; display: grid; gap: 2px; }
+.user-menu .dropdown-menu .btn { width: 100%; justify-content: flex-start; }
+
+/* สถานะของแต่ละเข็ม */
+.series-table td { vertical-align: top; }
+.slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.slot {
+  min-width: 132px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  display: grid; gap: 4px; background: var(--surface);
+}
+.slot.given { background: var(--surface-2); }
+.slot.overdue { border-color: var(--danger); }
+.slot.due { border-color: var(--warn); }
+.slot.out_of_age, .slot.no_data { opacity: 0.75; border-style: dashed; }
+.slot-label { font-weight: 600; font-size: 13px; }
+.slot .badge { justify-self: start; }
+
+/* ฟอร์มบันทึกการฉีด */
+.record-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.place-field { border: 0; padding: 0; margin: 0; min-width: 0; }
+.radio-row { display: flex; flex-wrap: wrap; gap: 4px 12px; min-height: 40px; align-items: center; }
+.chips button.chip { cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; }
+.chips button.chip:hover { border-color: var(--accent); }
+[hidden] { display: none !important; }
+.json-editor { font-family: ui-monospace, Consolas, monospace; font-size: 13px; line-height: 1.5; min-height: 360px; resize: vertical; }
+.search-form .grow { flex: 1; }
+
+/* ใบนัด */
+.slip { max-width: 560px; margin: 0 auto; }
+.slip-actions { display: flex; gap: 8px; margin-bottom: 16px; }
+.slip-paper { background: #fff; color: #000; border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+.slip-paper h1 { font-size: 22px; margin: 0; text-align: center; }
+.slip-unit { text-align: center; margin: 4px 0 18px; }
+.slip-date { font-size: 20px; font-weight: 700; }
+
+@media (max-width: 900px) {
+  .record-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .series-table thead { display: none; }
+  .series-table tr, .series-table td { display: block; }
+  .series-table td:first-child { padding-bottom: 4px; border-bottom: 0; }
+  .slot { min-width: 0; flex: 1 1 130px; }
+  .record-grid { grid-template-columns: minmax(0, 1fr); }
+  .user-menu > summary span { display: none; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  .bare { padding: 0; background: #fff; }
+  .slip-paper { border: 0; padding: 0; }
+}

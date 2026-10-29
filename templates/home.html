@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>ค้นหาเด็ก</h1><p>ค้นจาก JHCIS ด้วยเลขบัตรประชาชน 13 หลัก, HN หรือชื่อ/นามสกุล แล้วเปิดสมุดวัคซีนเพื่อบันทึกการฉีด</p></div>
+</div>
+
+<form class="card card-pad inline-form search-form" method="get" action="/">
+  <label class="field grow"><span class="sr-only">คำค้น</span>
+    <input class="input" name="q" value="{{ q }}" placeholder="เช่น 1499900123456, 6086 หรือ สมชาย ใจดี" autofocus autocomplete="off"></label>
+  <button class="btn btn-primary" type="submit"><i class="ph ph-magnifying-glass"></i>ค้นหา</button>
+</form>
+
+{% if q %}
+<div class="card" style="margin-top:16px">
+  <div class="card-head"><h2>ผลการค้นหา</h2><span class="muted small">{{ results|length }} คน{% if results|length >= 50 %} (แสดง 50 คนแรก){% endif %}</span></div>
+  {% if results %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>ชื่อ</th><th>HN</th><th>เลขบัตร</th><th>วันเกิด</th><th>อายุ</th><th>ที่อยู่</th><th></th></tr></thead>
+    <tbody>
+    {% for p in results %}
+      <tr>
+        <td class="strong"><a href="/person/{{ p.pcucodeperson }}/{{ p.pid }}">{{ p.name }}</a></td>
+        <td class="num">{{ p.pid }}</td>
+        <td class="num nowrap">{{ p.idcard|cid }}</td>
+        <td class="nowrap">{{ p.birth|thai_date }}</td>
+        <td class="nowrap">{{ p.birth|age }}</td>
+        <td>{% if p.hno %}{{ p.hno }} {% endif %}{% if p.villno %}ม.{{ p.villno }} {{ p.villname }}{% endif %}</td>
+        <td>{% if not in_area(p) %}<span class="badge">{{ 'จำหน่ายแล้ว' if p.dischargetype != '9' else 'นอกเขต' }}</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="empty"><i class="ph ph-user-circle-dashed"></i><div>ไม่พบใน JHCIS ถ้าเป็นเด็กเกิดใหม่ ต้องลงทะเบียนใน JHCIS ก่อน</div></div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="grid-2" style="margin-top:16px;align-items:start">
+  <div class="card">
+    <div class="card-head"><h2><i class="ph ph-calendar-dots"></i>นัดใน 7 วันข้างหน้า</h2><span class="muted small">{{ upcoming|length }} นัด</span></div>
+    {% if upcoming %}
+    <div class="table-wrap"><table class="table mini">
+      <thead><tr><th>วันนัด</th><th>ชื่อ</th><th>วัคซีน</th></tr></thead>
+      <tbody>
+      {% for a in upcoming %}
+        <tr>
+          <td class="nowrap">{{ a.date_appoint|thai_date }}{% if a.date_appoint == today %} <span class="badge warn">วันนี้</span>{% endif %}</td>
+          <td><a href="/person/{{ a.pcucodeperson }}/{{ a.pid }}">{{ a.person.name if a.person else a.pid }}</a></td>
+          <td class="small">{{ a.vaccines }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="empty small"><div>ไม่มีนัดในแอปช่วง 7 วันนี้</div></div>{% endif %}
+  </div>
+
+  <a class="card stat" href="/pending">
+    <div class="stat-label"><i class="ph ph-tray-arrow-up"></i>รอลง JHCIS (90 วันล่าสุด)</div>
+    <div class="stat-value">{{ pending_count }} <span class="stat-unit">รายการ</span></div>
+    <div class="stat-sub">การฉีดที่นี่ที่ยังไม่พบใน visitepi ต้องคีย์ใน JHCIS เพื่อให้ข้อมูลส่งถึง HDC</div>
+  </a>
+</div>
+{% endblock %}

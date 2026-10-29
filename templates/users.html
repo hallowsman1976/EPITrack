@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><h1>ผู้ใช้</h1><p>ผู้ดูแลจัดการผู้ใช้ ตารางวัคซีน และ mapping ได้ · เจ้าหน้าที่บันทึก แก้ไข และลบรายการฉีดได้</p></div></div>
+
+<div class="card">
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>บทบาท</th><th>สถานะ</th><th>ตั้งรหัสผ่านใหม่</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td class="code">{{ u.username }}</td>
+        <td><input class="input" name="display_name" value="{{ u.display_name }}" form="u{{ u.id }}"></td>
+        <td><div class="select-wrap"><select class="input" name="role" form="u{{ u.id }}">
+          {% for key, label in ROLES.items() %}<option value="{{ key }}" {% if u.role == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select></div></td>
+        <td><div class="select-wrap"><select class="input" name="active" form="u{{ u.id }}">
+          <option value="1" {% if u.active %}selected{% endif %}>ใช้งาน</option>
+          <option value="0" {% if not u.active %}selected{% endif %}>ปิดการใช้งาน</option>
+        </select></div></td>
+        <td><input class="input" name="password" type="password" minlength="6" placeholder="เว้นว่าง = ไม่เปลี่ยน" autocomplete="new-password" form="u{{ u.id }}"></td>
+        <td><form id="u{{ u.id }}" method="post" action="/admin/users/{{ u.id }}" data-busy>
+          <button class="btn small" type="submit"><i class="ph ph-floppy-disk"></i>บันทึก</button></form></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<form class="card" method="post" action="/admin/users" data-busy autocomplete="off" style="margin-top:16px">
+  <div class="card-head"><h2><i class="ph ph-user-plus"></i>เพิ่มผู้ใช้</h2></div>
+  <div class="card-pad">
+    <div class="form-grid">
+      <label class="field"><span>ชื่อผู้ใช้ (ใช้ล็อกอิน)</span><input class="input" name="username" required autocapitalize="off"></label>
+      <label class="field"><span>ชื่อที่แสดง</span><input class="input" name="display_name" required></label>
+      <label class="field"><span>รหัสผ่านเริ่มต้น</span><input class="input" name="password" type="password" minlength="6" required autocomplete="new-password"></label>
+      <label class="field"><span>บทบาท</span><div class="select-wrap"><select class="input" name="role">
+        <option value="staff">เจ้าหน้าที่</option><option value="admin">ผู้ดูแล</option></select></div></label>
+    </div>
+    <div class="actions"><button class="btn btn-primary" type="submit"><i class="ph ph-user-plus"></i>เพิ่มผู้ใช้</button></div>
+  </div>
+</form>
+{% endblock %}

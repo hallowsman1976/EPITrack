@@ -1,0 +1,850 @@
+{
+ "notes": "รหัสวัคซีน JHCIS -> ชุดวัคซีน (series ว่าง = ตั้งใจไม่นับ) รหัสหนึ่งนับได้หลายชุด product ใช้กับ Rota: RV1 ฉีด 2 เข็ม, RV5 ฉีด 3 เข็ม",
+ "map": [
+  {
+   "code": "BCG",
+   "series": "BCG"
+  },
+  {
+   "code": "BCGS1",
+   "series": "BCG"
+  },
+  {
+   "code": "HBV1",
+   "series": "HB0"
+  },
+  {
+   "code": "DTP1",
+   "series": "DTP"
+  },
+  {
+   "code": "DTP2",
+   "series": "DTP"
+  },
+  {
+   "code": "DTP3",
+   "series": "DTP"
+  },
+  {
+   "code": "DTP4",
+   "series": "DTP"
+  },
+  {
+   "code": "DTP5",
+   "series": "DTP"
+  },
+  {
+   "code": "DHB1",
+   "series": "DTP"
+  },
+  {
+   "code": "DHB2",
+   "series": "DTP"
+  },
+  {
+   "code": "DHB3",
+   "series": "DTP"
+  },
+  {
+   "code": "D11",
+   "series": "DTP"
+  },
+  {
+   "code": "D12",
+   "series": "DTP"
+  },
+  {
+   "code": "D13",
+   "series": "DTP"
+  },
+  {
+   "code": "D14",
+   "series": "DTP"
+  },
+  {
+   "code": "D21",
+   "series": "DTP"
+  },
+  {
+   "code": "D22",
+   "series": "DTP"
+  },
+  {
+   "code": "D23",
+   "series": "DTP"
+  },
+  {
+   "code": "D24",
+   "series": "DTP"
+  },
+  {
+   "code": "D31",
+   "series": "DTP"
+  },
+  {
+   "code": "D32",
+   "series": "DTP"
+  },
+  {
+   "code": "D33",
+   "series": "DTP"
+  },
+  {
+   "code": "D34",
+   "series": "DTP"
+  },
+  {
+   "code": "D35",
+   "series": "DTP"
+  },
+  {
+   "code": "D41",
+   "series": "DTP"
+  },
+  {
+   "code": "D42",
+   "series": "DTP"
+  },
+  {
+   "code": "D43",
+   "series": "DTP"
+  },
+  {
+   "code": "D44",
+   "series": "DTP"
+  },
+  {
+   "code": "D45",
+   "series": "DTP"
+  },
+  {
+   "code": "D51",
+   "series": "DTP"
+  },
+  {
+   "code": "D52",
+   "series": "DTP"
+  },
+  {
+   "code": "D53",
+   "series": "DTP"
+  },
+  {
+   "code": "D54",
+   "series": "DTP"
+  },
+  {
+   "code": "D55",
+   "series": "DTP"
+  },
+  {
+   "code": "D31",
+   "series": "POLIO"
+  },
+  {
+   "code": "D32",
+   "series": "POLIO"
+  },
+  {
+   "code": "D33",
+   "series": "POLIO"
+  },
+  {
+   "code": "D34",
+   "series": "POLIO"
+  },
+  {
+   "code": "D35",
+   "series": "POLIO"
+  },
+  {
+   "code": "D41",
+   "series": "POLIO"
+  },
+  {
+   "code": "D42",
+   "series": "POLIO"
+  },
+  {
+   "code": "D43",
+   "series": "POLIO"
+  },
+  {
+   "code": "D44",
+   "series": "POLIO"
+  },
+  {
+   "code": "D45",
+   "series": "POLIO"
+  },
+  {
+   "code": "D51",
+   "series": "POLIO"
+  },
+  {
+   "code": "D52",
+   "series": "POLIO"
+  },
+  {
+   "code": "D53",
+   "series": "POLIO"
+  },
+  {
+   "code": "D54",
+   "series": "POLIO"
+  },
+  {
+   "code": "D55",
+   "series": "POLIO"
+  },
+  {
+   "code": "OPV1",
+   "series": "POLIO"
+  },
+  {
+   "code": "OPV2",
+   "series": "POLIO"
+  },
+  {
+   "code": "OPV3",
+   "series": "POLIO"
+  },
+  {
+   "code": "OPV4",
+   "series": "POLIO"
+  },
+  {
+   "code": "OPV5",
+   "series": "POLIO"
+  },
+  {
+   "code": "OPV6",
+   "series": "POLIO"
+  },
+  {
+   "code": "OPVs1",
+   "series": "POLIO"
+  },
+  {
+   "code": "OPVs2",
+   "series": "POLIO"
+  },
+  {
+   "code": "OPVs3",
+   "series": "POLIO"
+  },
+  {
+   "code": "OVs1",
+   "series": "POLIO"
+  },
+  {
+   "code": "OVs2",
+   "series": "POLIO"
+  },
+  {
+   "code": "OVs3",
+   "series": "POLIO"
+  },
+  {
+   "code": "I11",
+   "series": "POLIO"
+  },
+  {
+   "code": "I12",
+   "series": "POLIO"
+  },
+  {
+   "code": "I13",
+   "series": "POLIO"
+  },
+  {
+   "code": "I14",
+   "series": "POLIO"
+  },
+  {
+   "code": "I15",
+   "series": "POLIO"
+  },
+  {
+   "code": "IPV-P",
+   "series": "POLIO"
+  },
+  {
+   "code": "IPVs",
+   "series": "POLIO"
+  },
+  {
+   "code": "R11",
+   "series": "ROTA",
+   "product": "RV1"
+  },
+  {
+   "code": "R12",
+   "series": "ROTA",
+   "product": "RV1"
+  },
+  {
+   "code": "R21",
+   "series": "ROTA",
+   "product": "RV5"
+  },
+  {
+   "code": "R22",
+   "series": "ROTA",
+   "product": "RV5"
+  },
+  {
+   "code": "R23",
+   "series": "ROTA",
+   "product": "RV5"
+  },
+  {
+   "code": "P21",
+   "series": "PCV"
+  },
+  {
+   "code": "P22",
+   "series": "PCV"
+  },
+  {
+   "code": "P23",
+   "series": "PCV"
+  },
+  {
+   "code": "P24",
+   "series": "PCV"
+  },
+  {
+   "code": "P11",
+   "series": "PCV"
+  },
+  {
+   "code": "P12",
+   "series": "PCV"
+  },
+  {
+   "code": "P13",
+   "series": "PCV"
+  },
+  {
+   "code": "P14",
+   "series": "PCV"
+  },
+  {
+   "code": "MMR",
+   "series": "MMR"
+  },
+  {
+   "code": "MMR1",
+   "series": "MMR"
+  },
+  {
+   "code": "MMR2",
+   "series": "MMR"
+  },
+  {
+   "code": "MMRs",
+   "series": "MMR"
+  },
+  {
+   "code": "MMRC",
+   "series": "MMR"
+  },
+  {
+   "code": "MEAS",
+   "series": "MMR"
+  },
+  {
+   "code": "MRC",
+   "series": "MMR"
+  },
+  {
+   "code": "MRs",
+   "series": "MMR"
+  },
+  {
+   "code": "M11",
+   "series": "MMR"
+  },
+  {
+   "code": "M12",
+   "series": "MMR"
+  },
+  {
+   "code": "J11",
+   "series": "LAJE"
+  },
+  {
+   "code": "J12",
+   "series": "LAJE"
+  },
+  {
+   "code": "JEs1",
+   "series": "LAJE"
+  },
+  {
+   "code": "JEs2",
+   "series": "LAJE"
+  },
+  {
+   "code": "JE1",
+   "series": "LAJE"
+  },
+  {
+   "code": "JE2",
+   "series": "LAJE"
+  },
+  {
+   "code": "JE3",
+   "series": "LAJE"
+  },
+  {
+   "code": "HPVs1",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVs2",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVsPlus",
+   "series": "HPV"
+  },
+  {
+   "code": "H41",
+   "series": "HPV"
+  },
+  {
+   "code": "H42",
+   "series": "HPV"
+  },
+  {
+   "code": "H43",
+   "series": "HPV"
+  },
+  {
+   "code": "HPV21",
+   "series": "HPV"
+  },
+  {
+   "code": "HPV22",
+   "series": "HPV"
+  },
+  {
+   "code": "HPV23",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVC21",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVC22",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVC23",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVG41",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVG42",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVG43",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVG91",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVG92",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVG93",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVV21",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVV22",
+   "series": "HPV"
+  },
+  {
+   "code": "HPVV23",
+   "series": "HPV"
+  },
+  {
+   "code": "DTS4",
+   "series": "DT6"
+  },
+  {
+   "code": "dT",
+   "series": "DT6"
+  },
+  {
+   "code": "DT_B",
+   "series": "DT6"
+  },
+  {
+   "code": "T11",
+   "series": "DT6"
+  },
+  {
+   "code": "T12",
+   "series": "DT6"
+  },
+  {
+   "code": "T41",
+   "series": "DT6"
+  },
+  {
+   "code": "HBV2",
+   "series": ""
+  },
+  {
+   "code": "HBV3",
+   "series": ""
+  },
+  {
+   "code": "HBVs1",
+   "series": ""
+  },
+  {
+   "code": "HBVs2",
+   "series": ""
+  },
+  {
+   "code": "HBVs3",
+   "series": ""
+  },
+  {
+   "code": "OPVC",
+   "series": ""
+  },
+  {
+   "code": "OVC",
+   "series": ""
+  },
+  {
+   "code": "DTS1",
+   "series": ""
+  },
+  {
+   "code": "DTS2",
+   "series": ""
+  },
+  {
+   "code": "DTS3",
+   "series": ""
+  },
+  {
+   "code": "dTs1",
+   "series": ""
+  },
+  {
+   "code": "dTs2",
+   "series": ""
+  },
+  {
+   "code": "dTs3",
+   "series": ""
+  },
+  {
+   "code": "dTs4",
+   "series": ""
+  },
+  {
+   "code": "dTC",
+   "series": ""
+  },
+  {
+   "code": "DT1",
+   "series": ""
+  },
+  {
+   "code": "DT2",
+   "series": ""
+  },
+  {
+   "code": "DT3",
+   "series": ""
+  },
+  {
+   "code": "DT4",
+   "series": ""
+  },
+  {
+   "code": "DT5",
+   "series": ""
+  },
+  {
+   "code": "DTANC1",
+   "series": ""
+  },
+  {
+   "code": "DTANC2",
+   "series": ""
+  },
+  {
+   "code": "DTANC3",
+   "series": ""
+  },
+  {
+   "code": "DTANC4",
+   "series": ""
+  },
+  {
+   "code": "DTANC5",
+   "series": ""
+  },
+  {
+   "code": "dTANC1",
+   "series": ""
+  },
+  {
+   "code": "dTANC2",
+   "series": ""
+  },
+  {
+   "code": "dTANC3",
+   "series": ""
+  },
+  {
+   "code": "dTANC4",
+   "series": ""
+  },
+  {
+   "code": "dTANC5",
+   "series": ""
+  },
+  {
+   "code": "dTA3",
+   "series": ""
+  },
+  {
+   "code": "dTA4",
+   "series": ""
+  },
+  {
+   "code": "dTA5",
+   "series": ""
+  },
+  {
+   "code": "TT",
+   "series": ""
+  },
+  {
+   "code": "TT1",
+   "series": ""
+  },
+  {
+   "code": "TT2",
+   "series": ""
+  },
+  {
+   "code": "TT3",
+   "series": ""
+  },
+  {
+   "code": "TT4",
+   "series": ""
+  },
+  {
+   "code": "TT5",
+   "series": ""
+  },
+  {
+   "code": "RB",
+   "series": ""
+  },
+  {
+   "code": "RB1",
+   "series": ""
+  },
+  {
+   "code": "RB2",
+   "series": ""
+  },
+  {
+   "code": "RB3",
+   "series": ""
+  },
+  {
+   "code": "RB4",
+   "series": ""
+  },
+  {
+   "code": "RB5",
+   "series": ""
+  },
+  {
+   "code": "2P03",
+   "series": ""
+  },
+  {
+   "code": "FLU",
+   "series": ""
+  },
+  {
+   "code": "FLU001",
+   "series": ""
+  },
+  {
+   "code": "FLU2009",
+   "series": ""
+  },
+  {
+   "code": "816",
+   "series": ""
+  },
+  {
+   "code": "COVID19-1",
+   "series": ""
+  },
+  {
+   "code": "COVID19-2",
+   "series": ""
+  },
+  {
+   "code": "COVID19-3",
+   "series": ""
+  },
+  {
+   "code": "COVID19-4",
+   "series": ""
+  },
+  {
+   "code": "COVID19-5",
+   "series": ""
+  },
+  {
+   "code": "COVID19-6",
+   "series": ""
+  },
+  {
+   "code": "COVID19-7",
+   "series": ""
+  },
+  {
+   "code": "COVID19-8",
+   "series": ""
+  },
+  {
+   "code": "COVID19-9",
+   "series": ""
+  },
+  {
+   "code": "COVID1910",
+   "series": ""
+  },
+  {
+   "code": "C11",
+   "series": ""
+  },
+  {
+   "code": "C12",
+   "series": ""
+  },
+  {
+   "code": "C13",
+   "series": ""
+  },
+  {
+   "code": "C14",
+   "series": ""
+  },
+  {
+   "code": "H11",
+   "series": ""
+  },
+  {
+   "code": "H12",
+   "series": ""
+  },
+  {
+   "code": "H13",
+   "series": ""
+  },
+  {
+   "code": "H14",
+   "series": ""
+  },
+  {
+   "code": "H21",
+   "series": ""
+  },
+  {
+   "code": "H22",
+   "series": ""
+  },
+  {
+   "code": "H31",
+   "series": ""
+  },
+  {
+   "code": "H32",
+   "series": ""
+  },
+  {
+   "code": "H33",
+   "series": ""
+  },
+  {
+   "code": "M21",
+   "series": ""
+  },
+  {
+   "code": "M31",
+   "series": ""
+  },
+  {
+   "code": "P31",
+   "series": ""
+  },
+  {
+   "code": "P32",
+   "series": ""
+  },
+  {
+   "code": "P41",
+   "series": ""
+  },
+  {
+   "code": "T21",
+   "series": ""
+  },
+  {
+   "code": "T31",
+   "series": ""
+  },
+  {
+   "code": "T32",
+   "series": ""
+  },
+  {
+   "code": "T33",
+   "series": ""
+  },
+  {
+   "code": "V11",
+   "series": ""
+  },
+  {
+   "code": "V12",
+   "series": ""
+  },
+  {
+   "code": "Y11",
+   "series": ""
+  }
+ ]
+}

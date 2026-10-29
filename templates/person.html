@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ p.name }}</h1>
+    <p>HN {{ p.pid }} · {{ p.idcard|cid }} · {{ p.sex|sex }} · เกิด {{ p.birth|thai_date(false) }} (อายุ {{ p.birth|age(today) }})
+      {% if p.villno %}· {{ p.hno or '' }} ม.{{ p.villno }} {{ p.villname }}{% endif %}
+      {% if p.mother %}· แม่ {{ p.mother }}{% endif %}{% if p.phone %} · โทร {{ p.phone }}{% endif %}</p>
+  </div>
+  {% if not in_area %}<span class="badge warn">{{ 'จำหน่ายแล้ว' if p.dischargetype != '9' else 'ไม่อยู่ในเขตรับผิดชอบ' }} (ไม่แสดงในรายชื่อติดตาม)</span>{% endif %}
+</div>
+
+{# ---------- สถานะตามตารางวัคซีน ---------- #}
+<div class="card">
+  <div class="card-head"><h2><i class="ph ph-list-checks"></i>สถานะตามตารางวัคซีน</h2>
+    <span class="muted small">{% if c.pending %}ค้างฉีด {{ c.pending|length }} ชนิด{% else %}ไม่มีวัคซีนค้าง{% endif %}</span></div>
+  <div class="table-wrap"><table class="table series-table">
+    <thead><tr><th>วัคซีน</th><th>เข็ม</th></tr></thead>
+    <tbody>
+    {% for r in c.results %}
+      <tr>
+        <td class="strong nowrap">{{ r.series.name }}
+          {% if r.variant.label %}<div class="muted small">{{ r.variant.label }}</div>{% endif %}</td>
+        <td><div class="slots">
+          {% for s in r.slots %}
+          <div class="slot {{ s.status }}">
+            <div class="slot-label">{{ s.label }}</div>
+            <span class="badge {{ s.badge }}">{% if s.status == 'given' %}<i class="ph ph-check"></i>{% elif s.status == 'overdue' %}<i class="ph ph-warning"></i>{% endif %}{{ s.status_text }}</span>
+            <div class="muted small">
+              {% if s.shot %}{{ s.shot.date|thai_date }}{% if 'app' in s.shot.sources and 'jhcis' not in s.shot.sources and s.shot.place == 'here' %} · <span class="text-warn">ยังไม่ลง JHCIS</span>{% endif %}
+              {% elif s.status in ('due', 'overdue') %}ควรได้ {{ s.due|thai_date }}{% if s.latest %} · ฉีดได้ถึง {{ s.latest|thai_date }}{% endif %}
+              {% elif s.status == 'not_yet' and s.earliest %}ได้ตั้งแต่ {{ s.earliest|thai_date }}
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if r.invalid %}<div class="small danger-text" style="margin-top:6px"><i class="ph ph-prohibit"></i> ไม่นับ (ฉีดก่อนกำหนด): {% for x in r.invalid %}{{ x.code }} {{ x.date|thai_date }}{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
+        {% if r.extra %}<div class="small muted" style="margin-top:6px">เกินจำนวนเข็มในตาราง: {% for x in r.extra %}{{ x.code }} {{ x.date|thai_date }}{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+{# ---------- บันทึก/แก้ไขการฉีด ---------- #}
+{% set f = editing or {} %}
+<form class="card" id="record" method="post" data-busy data-vaccination-form
+      action="{{ '/vaccinations/%d/edit'|format(editing.id) if editing else '/person/%s/%d/vaccinations'|format(p.pcucodeperson, p.pid) }}"
+      style="margin-top:16px">
+  <div class="card-head">
+    <h2><i class="ph ph-{{ 'pencil-simple' if editing else 'syringe' }}"></i>{{ 'แก้ไขรายการฉีด' if editing else 'บันทึกการฉีด' }}</h2>
+    {% if editing %}<a class="btn btn-ghost small" href="/person/{{ p.pcucodeperson }}/{{ p.pid }}#records">ยกเลิกการแก้ไข</a>{% endif %}
+  </div>
+  <div class="card-pad stack">
+    <div class="form-grid record-grid">
+      <label class="field span-2"><span>วัคซีน (รหัส JHCIS)</span>
+        <div class="select-wrap"><select class="input" name="vaccine_code" required>
+          <option value="">— เลือกวัคซีน —</option>
+          {% for group, items in options|groupby('order') %}
+          <optgroup label="{{ items[0].group }}">
+            {% for o in items %}<option value="{{ o.code }}" {% if f.vaccine_code == o.code %}selected{% endif %}>{{ o.code }} · {{ o.name }}</option>{% endfor %}
+          </optgroup>
+          {% endfor %}
+        </select></div>
+        {% if c.pending and not editing %}<span class="hint">เข็มที่ค้าง: {% for r, s in c.pending %}{{ s.label }}{{ ', ' if not loop.last }}{% else %}-{% endfor %}</span>{% endif %}
+      </label>
+      <label class="field"><span>วันที่ฉีด</span>
+        <input class="input" type="date" name="date_given" value="{{ f.date_given or today }}" max="{{ today }}" required></label>
+      <fieldset class="field place-field"><span>สถานที่ฉีด</span>
+        <div class="radio-row">
+          {% for key, label in PLACES.items() %}
+          <label class="check"><input type="radio" name="place" value="{{ key }}" {% if (f.place or 'here') == key %}checked{% endif %}> {{ label }}</label>
+          {% endfor %}
+        </div></fieldset>
+      <label class="field"><span>เลข lot</span><input class="input code" name="lot_no" value="{{ f.lot_no or '' }}" autocomplete="off"></label>
+      <label class="field"><span>วันหมดอายุ</span><input class="input" type="date" name="expire_date" value="{{ f.expire_date or '' }}"></label>
+      <label class="field"><span>ผู้ผลิต</span><input class="input" name="manufacturer" value="{{ f.manufacturer or '' }}" autocomplete="off"></label>
+      <label class="field" data-here-only><span>ผู้ฉีด</span><input class="input" name="giver" value="{{ f.giver if editing else default_giver }}"></label>
+      <label class="field" data-away-only hidden><span>ชื่อสถานที่ / แหล่งข้อมูล</span><input class="input" name="place_note" value="{{ f.place_note or '' }}" placeholder="เช่น รพ.มุกดาหาร, สมุดสีชมพู"></label>
+      <label class="field span-2"><span>หมายเหตุ</span><input class="input" name="note" value="{{ f.note or '' }}"></label>
+      {% if editing %}
+      <label class="field span-2"><span>เหตุผลของการแก้ไข (จำเป็น)</span><input class="input" name="reason" required></label>
+      {% endif %}
+    </div>
+    <div class="chips" data-lots></div>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit"><i class="ph ph-floppy-disk"></i>{{ 'บันทึกการแก้ไข' if editing else 'บันทึกการฉีด' }}</button>
+    </div>
+    <p class="hint">ฉีดที่นี่แล้วต้องลงใน JHCIS ด้วย รายการที่ยังไม่พบใน JHCIS จะอยู่ในหน้า "รอลง JHCIS"</p>
+  </div>
+</form>
+
+{# ---------- ประวัติวัคซีน ---------- #}
+<div class="card" id="records" style="margin-top:16px">
+  <div class="card-head"><h2><i class="ph ph-clock-counter-clockwise"></i>ประวัติวัคซีน</h2><span class="muted small">JHCIS + แอป · {{ c.records|length }} รายการ</span></div>
+  {% if c.records %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>วันที่</th><th>วัคซีน</th><th>นับเป็น</th><th>lot</th><th>สถานที่</th><th>ที่มา</th><th></th></tr></thead>
+    <tbody>
+    {% for rec in c.records|reverse %}
+      <tr>
+        <td class="nowrap">{{ rec.date|thai_date }}</td>
+        <td><span class="code">{{ rec.code }}</span> <span class="small">{{ rec.name }}</span></td>
+        <td class="small">{% if rec.series %}{{ rec.series|join(', ') }}{% elif rec.mapped %}<span class="muted">ไม่นับ</span>{% else %}<span class="badge warn" title="ผู้ดูแลเพิ่มใน mapping ได้">ยังไม่ได้ map</span>{% endif %}</td>
+        <td class="code small">{{ rec.lot or '-' }}</td>
+        <td class="small">{{ rec.place or '-' }}</td>
+        <td>{% if rec.source == 'jhcis' %}<span class="badge">JHCIS</span>{% else %}<span class="badge ok">แอป</span>
+          <div class="muted small">{{ rec.app.giver or rec.app.created_by_name }}</div>{% endif %}</td>
+        <td class="nowrap">
+          {% if rec.app %}
+          <a class="icon-btn" href="?edit={{ rec.app.id }}#record" title="แก้ไข" aria-label="แก้ไข"><i class="ph ph-pencil-simple"></i></a>
+          <a class="icon-btn" href="/vaccinations/{{ rec.app.id }}/history" title="ประวัติการแก้ไข" aria-label="ประวัติการแก้ไข"><i class="ph ph-clock-counter-clockwise"></i></a>
+          <details class="dropdown item-menu">
+            <summary class="icon-btn" title="ลบ" aria-label="ลบ"><i class="ph ph-trash"></i></summary>
+            <form class="dropdown-menu inline-form" method="post" action="/vaccinations/{{ rec.app.id }}/delete" data-confirm="ลบรายการฉีด {{ rec.code }} วันที่ {{ rec.date|thai_date }}?">
+              <input class="input" name="reason" placeholder="เหตุผลที่ลบ" required>
+              <button class="btn small" type="submit">ลบ</button>
+            </form>
+          </details>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<div class="empty small"><div>ยังไม่มีประวัติวัคซีน</div></div>{% endif %}
+</div>
+
+{# ---------- นัด ---------- #}
+<div class="grid-2" id="appointments" style="margin-top:16px;align-items:start">
+  <form class="card" method="post" action="/person/{{ p.pcucodeperson }}/{{ p.pid }}/appointments" data-busy>
+    <div class="card-head"><h2><i class="ph ph-calendar-plus"></i>นัดครั้งถัดไป</h2></div>
+    <div class="card-pad stack">
+      {% if suggest_date %}
+      <p class="small">แนะนำ <strong>{{ suggest_date|thai_date(false) }}</strong> (อายุ {{ p.birth|age(suggest_date) }}) — ฉีดได้: {% for r, s in suggest_items %}{{ s.label }}{{ ', ' if not loop.last }}{% endfor %}</p>
+      {% else %}<p class="small muted">ไม่มีวัคซีนพื้นฐานที่ต้องนัดเพิ่ม</p>{% endif %}
+      <div class="form-grid">
+        <label class="field"><span>วันนัด</span><input class="input" type="date" name="date_appoint" min="{{ today }}" value="{{ suggest_date or '' }}" required></label>
+        <label class="field"><span>หมายเหตุ</span><input class="input" name="note"></label>
+        <label class="field span-2"><span>วัคซีนที่นัด</span><input class="input" name="vaccines" value="{% for r, s in suggest_items %}{{ s.label }}{{ ', ' if not loop.last }}{% endfor %}"></label>
+      </div>
+      <div class="actions"><button class="btn btn-primary" type="submit"><i class="ph ph-floppy-disk"></i>บันทึกนัด</button></div>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="card-head"><h2><i class="ph ph-calendar-dots"></i>นัดในแอป</h2></div>
+    {% if appointments %}
+    <div class="table-wrap"><table class="table mini">
+      <tbody>
+      {% for a in appointments %}
+        <tr id="appt-{{ a.id }}">
+          <td class="nowrap">{{ a.date_appoint|thai_date }}{% if a.date_appoint < today %} <span class="muted small">(ผ่านแล้ว)</span>{% endif %}</td>
+          <td class="small">{{ a.vaccines }}{% if a.note %}<div class="muted">{{ a.note }}</div>{% endif %}</td>
+          <td class="nowrap">
+            <a class="icon-btn" href="/appointments/{{ a.id }}/slip" target="_blank" title="พิมพ์ใบนัด" aria-label="พิมพ์ใบนัด"><i class="ph ph-printer"></i></a>
+            {% if a.date_appoint >= today %}
+            <form method="post" action="/appointments/{{ a.id }}/cancel" style="display:inline" data-confirm="ยกเลิกนัดวันที่ {{ a.date_appoint|thai_date }}?">
+              <button class="icon-btn" type="submit" title="ยกเลิกนัด" aria-label="ยกเลิกนัด"><i class="ph ph-x"></i></button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="empty small"><div>ยังไม่มีนัด</div></div>{% endif %}
+    {% if jhcis_appointments %}
+    <details class="card-pad small">
+      <summary class="muted" style="cursor:pointer">นัดใน JHCIS ({{ jhcis_appointments|length }})</summary>
+      <ul class="plain-list">{% for a in jhcis_appointments[:20] %}<li>{{ a.dateappoint|thai_date }} · {{ a.vaccinecode }} {{ a.vaccinename }}</li>{% endfor %}</ul>
+    </details>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

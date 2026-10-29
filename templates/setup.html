@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block bare %}
+<form class="card card-pad stack auth-card" method="post" action="/setup" data-busy autocomplete="off">
+  <div class="auth-brand"><div class="brand-mark"><i class="ph ph-syringe"></i></div><span class="brand-name">EPITrack</span></div>
+  <h1>สร้างผู้ดูแลคนแรก</h1>
+  <p class="muted small">ฐานข้อมูลของแอปพร้อมแล้ว สร้างบัญชีผู้ดูแลเพื่อเริ่มใช้งาน ผู้ดูแลเพิ่มบัญชีเจ้าหน้าที่ได้ภายหลัง</p>
+  <label class="field"><span>ชื่อผู้ใช้ (ใช้ล็อกอิน)</span>
+    <input class="input" name="username" value="{{ form.username or '' }}" required autofocus autocapitalize="off"></label>
+  <label class="field"><span>ชื่อที่แสดง (ชื่อ-นามสกุล ตำแหน่ง)</span>
+    <input class="input" name="display_name" value="{{ form.display_name or '' }}" required></label>
+  <label class="field"><span>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</span>
+    <input class="input" name="password" type="password" minlength="6" required autocomplete="new-password"></label>
+  <label class="field"><span>ยืนยันรหัสผ่าน</span>
+    <input class="input" name="password2" type="password" minlength="6" required autocomplete="new-password"></label>
+  <button class="btn btn-primary" type="submit"><i class="ph ph-user-plus"></i>สร้างบัญชีและเริ่มใช้งาน</button>
+</form>
+{% endblock %}

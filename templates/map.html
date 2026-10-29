@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>mapping รหัสวัคซีน</h1>
+    <p>บอกว่ารหัสวัคซีนของ JHCIS นับเป็นชุดวัคซีนไหน · รหัสหนึ่งนับได้หลายชุด (วัคซีนรวม) · ชุดวัคซีนว่าง = ตั้งใจไม่นับ · เข็มที่นับจากลำดับวันที่ ไม่ได้อ่านจากรหัส</p></div>
+</div>
+
+{% if unmapped %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-head"><h2><i class="ph ph-warning text-warn"></i>รหัสที่มีการฉีดแต่ยังไม่อยู่ใน mapping</h2><span class="muted small">คนที่อายุไม่เกิน 18 ปี</span></div>
+  <div class="table-wrap"><table class="table mini">
+    <thead><tr><th>รหัส</th><th>ชื่อ</th><th>จำนวนครั้ง</th><th>ล่าสุด</th></tr></thead>
+    <tbody>{% for u in unmapped %}<tr><td class="code">{{ u.code }}</td><td>{{ u.name }}</td><td class="num">{{ u.n }}</td><td>{{ u.last_date|thai_date }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endif %}
+
+<form class="card" method="post" action="/admin/map" data-busy>
+  <div class="card-head"><h2><i class="ph ph-plus"></i>เพิ่ม / แก้ไข</h2></div>
+  <div class="card-pad inline-form">
+    <label class="field"><span>รหัส JHCIS</span><input class="input code" name="code" required list="codes" autocomplete="off"></label>
+    <datalist id="codes">{% for code, name in names.items() %}<option value="{{ code }}">{{ name }}</option>{% endfor %}</datalist>
+    <label class="field"><span>ชุดวัคซีน</span><div class="select-wrap"><select class="input" name="series">
+      <option value="">— ไม่นับ —</option>
+      {% for sid, sname in series.items() %}<option value="{{ sid }}">{{ sid }} · {{ sname }}</option>{% endfor %}
+    </select></div></label>
+    <label class="field"><span>product (Rota: RV1/RV5)</span><input class="input code" name="product" autocomplete="off"></label>
+    <button class="btn btn-primary" type="submit"><i class="ph ph-floppy-disk"></i>บันทึก</button>
+  </div>
+</form>
+
+<div class="card" style="margin-top:16px">
+  <div class="card-head"><h2>mapping ปัจจุบัน</h2><span class="muted small">{{ rows|length }} แถว</span></div>
+  <div class="table-wrap"><table class="table mini">
+    <thead><tr><th>รหัส</th><th>ชื่อใน JHCIS</th><th>ชุดวัคซีน</th><th>product</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr id="code-{{ r.code }}">
+        <td class="code">{{ r.code }}</td>
+        <td class="small">{{ names.get(r.code, '') or '-' }}</td>
+        <td>{% if r.series %}{{ r.series }} <span class="muted small">{{ series.get(r.series, 'ไม่มีในตาราง') }}</span>{% else %}<span class="muted">ไม่นับ</span>{% endif %}</td>
+        <td class="code">{{ r.product or '' }}</td>
+        <td><form method="post" action="/admin/map" data-confirm="ลบ {{ r.code }} → {{ r.series or 'ไม่นับ' }} ออกจาก mapping?">
+          <input type="hidden" name="code" value="{{ r.code }}"><input type="hidden" name="series" value="{{ r.series }}">
+          <button class="icon-btn" type="submit" name="action" value="delete" title="ลบ" aria-label="ลบ"><i class="ph ph-trash"></i></button></form></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

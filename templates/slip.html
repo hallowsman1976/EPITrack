@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block bare %}
+<div class="slip">
+  <div class="slip-actions no-print">
+    <button class="btn btn-primary" type="button" onclick="print()"><i class="ph ph-printer"></i>พิมพ์</button>
+    <a class="btn btn-ghost" href="/person/{{ p.pcucodeperson }}/{{ p.pid }}#appointments">กลับ</a>
+  </div>
+  <div class="slip-paper">
+    <h1>ใบนัดฉีดวัคซีน</h1>
+    <div class="slip-unit">{{ unit }}</div>
+    <dl class="kv">
+      <dt>ชื่อ</dt><dd>{{ p.name }}</dd>
+      <dt>HN</dt><dd>{{ p.pid }}</dd>
+      <dt>วันเกิด</dt><dd>{{ p.birth|thai_date(false) }}</dd>
+      <dt>วันนัด</dt><dd class="slip-date">{{ a.date_appoint|thai_date(false) }}</dd>
+      <dt>อายุในวันนัด</dt><dd>{{ p.birth|age(a.date_appoint) }}</dd>
+      <dt>วัคซีน</dt><dd>{{ a.vaccines or '-' }}</dd>
+      {% if a.note %}<dt>หมายเหตุ</dt><dd>{{ a.note }}</dd>{% endif %}
+    </dl>
+    <p class="small">กรุณานำสมุดบันทึกสุขภาพแม่และเด็ก (สมุดสีชมพู) มาด้วยทุกครั้ง หากมาตามนัดไม่ได้ กรุณาแจ้งเจ้าหน้าที่</p>
+  </div>
+</div>
+{% endblock %}

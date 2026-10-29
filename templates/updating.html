@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-pad stack" style="max-width:560px;margin:40px auto;text-align:center" data-updating="{{ target }}" data-ports="{{ ports|join(',') }}">
+  <i class="ph ph-circle-notch spin" style="font-size:40px;color:var(--accent);margin:0 auto" data-updating-icon></i>
+  <h1 style="font-size:20px" data-updating-title>กำลัง{{ action }}เวอร์ชัน {{ target }}</h1>
+  <p class="muted" data-updating-msg>โปรแกรมจะปิดแล้วเปิดใหม่เอง ใช้เวลาประมาณ 20–60 วินาที<br>อย่าปิดหน้าต่างดำ "EPITrack – กำลังอัปเดต"</p>
+  <p class="hint" data-updating-wait></p>
+</div>
+<script>
+  // รอให้โปรแกรมเวอร์ชันเป้าหมายตอบ /api/ping แล้วกลับหน้าหลัก
+  (function () {
+    const box = document.querySelector("[data-updating]");
+    const target = box.dataset.updating;
+    const started = Date.now();
+    // พอร์ตเดิมก่อน แล้วไล่พอร์ตอื่นที่โปรแกรมอาจได้ไป
+    const ports = [location.port, ...box.dataset.ports.split(",").filter((p) => p !== location.port)];
+    const host = location.hostname;
+
+    async function ping(port) {
+      try {
+        const r = await fetch(`http://${host}:${port}/api/ping`,
+                              { cache: "no-store", signal: AbortSignal.timeout(2500) });
+        return (await r.json()).version;
+      } catch (e) { return null; }
+    }
+
+    async function poll() {
+      const secs = Math.round((Date.now() - started) / 1000);
+      box.querySelector("[data-updating-wait]").textContent = `รอแล้ว ${secs} วินาที`;
+      // ถามทุกพอร์ตพร้อมกัน (Windows ใช้เวลาราว 2 วินาทีกว่าจะตอบว่าพอร์ตปิด)
+      const versions = secs < 5 ? [] : await Promise.all(ports.map(ping));
+      for (const [i, version] of versions.entries()) {
+        const port = ports[i];
+        if (version === target) {
+          location.href = `http://${host}:${port}/`;
+          return;
+        }
+        if (version && secs > 75) {
+          box.querySelector("[data-updating-icon]").className = "ph ph-warning-circle";
+          box.querySelector("[data-updating-title]").textContent = `ยังใช้เวอร์ชัน ${version} อยู่`;
+          box.querySelector("[data-updating-msg]").innerHTML =
+            `ติดตั้งไม่สำเร็จ โปรแกรมกลับไปใช้เวอร์ชันเดิมแล้ว รายละเอียดอยู่ในไฟล์ update.log ในโฟลเดอร์โปรแกรม<br>` +
+            `<a class="btn" style="margin-top:12px" href="http://${host}:${port}/settings#update">กลับไปหน้าตั้งค่า</a>`;
+          return;
+        }
+      }
+      setTimeout(poll, 1500);
+    }
+    setTimeout(poll, 1500);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>ประวัติการแก้ไขรายการฉีด</h1>
+    <p>{{ row.vaccine_code }} วันที่ {{ row.date_given|thai_date(false) }} · {% if p %}<a href="/person/{{ p.pcucodeperson }}/{{ p.pid }}">{{ p.name }}</a>{% endif %}
+    {% if row.deleted_at %} · <span class="badge danger">ลบแล้ว: {{ row.delete_reason }}</span>{% endif %}</p></div>
+</div>
+<div class="card">
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>เมื่อ</th><th>ผู้ทำ</th><th>การกระทำ</th><th>เหตุผล</th><th>การเปลี่ยนแปลง</th></tr></thead>
+    <tbody>
+    {% for log in logs %}
+      <tr>
+        <td class="nowrap">{{ log.at|thai_date }} {{ log.at.strftime('%H:%M') }}</td>
+        <td>{{ log.display_name or '-' }}</td>
+        <td>{{ ACTIONS.get(log.action, log.action) }}</td>
+        <td class="small">{{ log.reason or '-' }}</td>
+        <td class="small">
+          {% if log.before and log.after %}
+            {% for k, v in log.after.items() if log.before.get(k)|string != v|string %}
+            <div><span class="code">{{ k }}</span>: <span class="old">{{ log.before.get(k) or '-' }}</span> → {{ v or '-' }}</div>
+            {% else %}<span class="muted">ไม่มีค่าที่เปลี่ยน</span>{% endfor %}
+          {% elif log.after %}
+            {% for k, v in log.after.items() if v %}<div><span class="code">{{ k }}</span>: {{ v }}</div>{% endfor %}
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

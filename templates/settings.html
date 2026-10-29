@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>ตั้งค่า</h1><p>การเชื่อมต่อฐานข้อมูล การสำรองข้อมูล และการอัปเดตโปรแกรม</p></div>
+</div>
+
+{% if problem %}
+<div class="alert warn" style="margin-bottom:20px">
+  <i class="ph ph-hand-waving"></i>
+  <div><strong>ยังใช้งานไม่ได้: {{ problem }}</strong><br>กรอกค่าการเชื่อมต่อเซิร์ฟเวอร์ JHCIS กด "ทดสอบการเชื่อมต่อ" แล้วกด "บันทึก" โปรแกรมจะสร้างฐานข้อมูลของแอปให้เอง</div>
+</div>
+{% endif %}
+<div class="grid-2" style="align-items:start">
+  <form class="card" method="post" action="/settings" data-busy autocomplete="off">
+    <button type="submit" name="action" value="save" tabindex="-1" aria-hidden="true" style="position:absolute;width:0;height:0;padding:0;border:0;overflow:hidden"></button>
+    <div class="card-head"><h2><i class="ph ph-plugs-connected"></i>เซิร์ฟเวอร์ฐานข้อมูล</h2></div>
+    <div class="card-pad stack">
+      <div class="form-grid">
+        <label class="field"><span>IP Address</span>
+          <input class="input num" name="host" value="{{ form.host }}" required inputmode="decimal" placeholder="127.0.0.1"></label>
+        <label class="field"><span>Port</span>
+          <input class="input num" name="port" type="number" min="1" max="65535" value="{{ form.port }}" required></label>
+        <label class="field span-2"><span>Username</span>
+          <input class="input" name="user" value="{{ form.user }}" required autocapitalize="off"></label>
+        <label class="field span-2"><span>Password</span>
+          <div class="input-group">
+            <input class="input" id="password" name="password" type="password" placeholder="เว้นว่างไว้เพื่อใช้รหัสผ่านเดิม" autocomplete="new-password">
+            <button class="icon-btn" type="button" data-reveal="password" aria-label="แสดงรหัสผ่าน"><i class="ph ph-eye"></i></button>
+          </div></label>
+        <label class="field"><span>ฐานข้อมูล JHCIS (อ่านอย่างเดียว)</span>
+          <input class="input" name="database" value="{{ form.database }}" required autocapitalize="off"></label>
+        <label class="field"><span>Charset ของ JHCIS</span>
+          <div class="select-wrap"><select class="input" name="charset">
+            {% for c in charsets %}<option {% if c == form.charset %}selected{% endif %}>{{ c }}</option>{% endfor %}
+          </select></div></label>
+        <label class="field span-2"><span>ฐานข้อมูลของแอป (สร้างให้อัตโนมัติ)</span>
+          <input class="input" name="app_database" value="{{ form.app_database }}" required pattern="[A-Za-z0-9_]+" autocapitalize="off">
+          <span class="hint">เก็บรายการฉีด นัด ผู้ใช้ และประวัติการแก้ไข บนเซิร์ฟเวอร์เดียวกับ JHCIS user ต้องมีสิทธิ์สร้างฐานข้อมูล</span></label>
+        <label class="field span-2"><span>โฟลเดอร์สำรองข้อมูล</span>
+          <input class="input" name="backup_dir" value="{{ form.backup_dir }}" placeholder="{{ backup_dir }}">
+          <span class="hint">เว้นว่าง = โฟลเดอร์ backups ข้างโปรแกรม</span></label>
+      </div>
+
+      {% if result %}
+      <div class="alert {{ 'ok' if result[0] else 'danger' }}" role="status">
+        <i class="ph ph-{{ 'check-circle' if result[0] else 'warning-circle' }}"></i><div>{{ result[1] }}</div>
+      </div>
+      {% endif %}
+
+      <div class="actions">
+        <button class="btn" type="submit" name="action" value="test"><i class="ph ph-plug"></i>ทดสอบการเชื่อมต่อ</button>
+        <button class="btn btn-primary" type="submit" name="action" value="save"><i class="ph ph-floppy-disk"></i>บันทึก</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="card" id="backup">
+    <div class="card-head"><h2><i class="ph ph-database"></i>สำรองข้อมูล</h2></div>
+    <div class="card-pad stack small">
+      <div class="muted">สำรองฐานข้อมูล {{ form.app_database }} อัตโนมัติวันละครั้ง เก็บ 30 ชุดล่าสุด ไว้ที่ <span class="code">{{ backup_dir }}</span> (มีข้อมูลคนไข้ เก็บในเครื่องนี้เท่านั้น)</div>
+      {% if backup_status.error %}<div class="alert danger"><i class="ph ph-warning-circle"></i><div>{{ backup_status.error }}</div></div>{% endif %}
+      {% if backups %}
+      <ul class="plain-list">{% for b in backups %}<li class="code">{{ b.name }} <span class="muted">({{ '%.0f'|format(b.stat().st_size / 1024) }} KB)</span></li>{% endfor %}</ul>
+      {% else %}<div class="muted">ยังไม่มีไฟล์สำรอง</div>{% endif %}
+      {% if user %}
+      <form method="post" action="/admin/backup" data-busy><button class="btn" type="submit"><i class="ph ph-download-simple"></i>สำรองตอนนี้</button></form>
+      {% endif %}
+      <div class="hint">กู้คืน: สร้างฐานข้อมูลเปล่า แล้วนำไฟล์ .sql เข้าด้วย mysql หรือ HeidiSQL</div>
+    </div>
+  </div>
+</div>
+
+{% set confirm_close = "return confirm('โปรแกรมจะปิดแล้วเปิดใหม่ เครื่องอื่นที่กำลังใช้งานจะหลุดชั่วคราว ต้องการทำต่อหรือไม่?')" %}
+<div class="card" id="update" style="margin-top:20px">
+  <div class="card-head"><h2><i class="ph ph-arrow-circle-up"></i>อัปเดตโปรแกรม</h2><span class="muted small">v{{ update.current }}</span></div>
+  <div class="card-pad stack">
+    {% if update_msg %}<div class="alert ok" role="status"><i class="ph ph-check-circle"></i><div>{{ update_msg }}</div></div>{% endif %}
+    {% if update_err %}<div class="alert danger" role="status"><i class="ph ph-warning-circle"></i><div>{{ update_err }}</div></div>{% endif %}
+    <div class="small">
+      {% if update.available %}
+      <strong>มีเวอร์ชันใหม่ v{{ update.latest }}</strong>{% if update.date %} <span class="muted">· {{ update.date }}</span>{% endif %}
+      {% if update.notes %}<div class="muted" style="white-space:pre-line;margin-top:6px">{{ update.notes }}</div>{% endif %}
+      {% elif update.latest %}ใช้เวอร์ชันล่าสุดอยู่แล้ว <span class="muted">(ตรวจเมื่อ {{ update.checked }})</span>
+      {% elif update.error and update.checked %}<span class="muted">ตรวจหาอัปเดตไม่ได้: {{ update.error }}</span>
+      {% else %}<span class="muted">กำลังตรวจหาอัปเดต...</span>{% endif %}
+    </div>
+    <div class="actions" style="justify-content:flex-start;flex-wrap:wrap">
+      <form method="post" action="/update/check" data-busy><button class="btn" type="submit"><i class="ph ph-arrows-clockwise"></i>ตรวจหาอัปเดต</button></form>
+      {% if update.available and update.can_install %}
+      <form method="post" action="/update/install" data-busy onsubmit="{{ confirm_close }}">
+        <button class="btn btn-primary" type="submit"><i class="ph ph-download-simple"></i>อัปเดตเป็น v{{ update.latest }}</button></form>
+      {% endif %}
+      {% if update.previous %}
+      <form method="post" action="/update/rollback" data-busy onsubmit="{{ confirm_close }}">
+        <button class="btn btn-ghost" type="submit"><i class="ph ph-arrow-counter-clockwise"></i>กลับไปเวอร์ชันก่อน (v{{ update.previous }})</button></form>
+      {% endif %}
+    </div>
+    {% if not update.can_install %}<p class="hint">ติดตั้งอัปเดตได้เฉพาะตอนใช้งานจาก EPITrack.exe</p>{% endif %}
+    <details>
+      <summary class="small muted" style="cursor:pointer">ขั้นสูง: แหล่งอัปเดต (Google Drive)</summary>
+      <form class="stack" method="post" action="/update/source" style="margin-top:12px">
+        <p class="hint">รหัสไฟล์ Google Drive ของ latest.json และ EPITrack-latest.zip เว้นว่าง = ใช้ค่าที่ฝังในโปรแกรม{% if not update_builtin %} (เวอร์ชันนี้ยังไม่ได้ฝังไว้){% endif %}</p>
+        <div class="form-grid">
+          <label class="field span-2"><span>รหัสไฟล์ latest.json</span>
+            <input class="input code" name="manifest_id" value="{{ update_ids.manifest }}" autocomplete="off" spellcheck="false"></label>
+          <label class="field span-2"><span>รหัสไฟล์ EPITrack-latest.zip</span>
+            <input class="input code" name="zip_id" value="{{ update_ids.zip }}" autocomplete="off" spellcheck="false"></label>
+        </div>
+        <div class="actions" style="justify-content:flex-start"><button class="btn" type="submit"><i class="ph ph-floppy-disk"></i>บันทึกแหล่งอัปเดต</button></div>
+      </form>
+    </details>
+  </div>
+</div>
+{% endblock %}

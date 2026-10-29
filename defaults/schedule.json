@@ -1,0 +1,116 @@
+{
+  "name": "วัคซีนพื้นฐาน (EPI) กระทรวงสาธารณสุข 2569 — ร่าง รอตรวจทาน",
+  "notes": "อายุเขียนเป็น 2m (เดือน), 6w (สัปดาห์), 1y6m (ปีและเดือน), 0d (วัน). due = อายุที่ควรได้, min_age = อายุต่ำสุด, min_interval = ห่างจากเข็มก่อนอย่างน้อย, max_age = อายุสูงสุดที่ยังฉีดได้, overdue_age = นับเลยกำหนดเมื่อเกินอายุนี้ (ถ้าไม่ใส่ = due + 1 เดือน)",
+  "series": [
+    {
+      "id": "BCG",
+      "name": "BCG",
+      "birth_dose": true,
+      "doses": [
+        {"label": "BCG", "due": "0d", "min_age": "0d", "max_age": "1y"}
+      ]
+    },
+    {
+      "id": "HB0",
+      "name": "ตับอักเสบบี แรกเกิด",
+      "birth_dose": true,
+      "doses": [
+        {"label": "HB1", "due": "0d", "min_age": "0d", "max_age": "1m"}
+      ]
+    },
+    {
+      "id": "DTP",
+      "name": "DTP-HB-Hib / DTP",
+      "doses": [
+        {"label": "DTP-HB-Hib1", "due": "2m", "min_age": "6w", "max_age": "7y"},
+        {"label": "DTP-HB-Hib2", "due": "4m", "min_age": "10w", "min_interval": "4w", "max_age": "7y"},
+        {"label": "DTP-HB-Hib3", "due": "6m", "min_age": "14w", "min_interval": "4w", "max_age": "7y"},
+        {"label": "DTP4", "due": "1y6m", "min_age": "1y", "min_interval": "6m", "max_age": "7y"},
+        {"label": "DTP5", "due": "4y", "min_age": "4y", "min_interval": "6m", "max_age": "7y"}
+      ]
+    },
+    {
+      "id": "POLIO",
+      "name": "โปลิโอ (IPV/OPV)",
+      "doses": [
+        {"label": "IPV1", "due": "2m", "min_age": "6w", "max_age": "18y"},
+        {"label": "IPV2", "due": "4m", "min_age": "10w", "min_interval": "4w", "max_age": "18y"},
+        {"label": "OPV1", "due": "6m", "min_age": "14w", "min_interval": "4w", "max_age": "18y"},
+        {"label": "OPV กระตุ้น 1", "due": "1y6m", "min_age": "1y", "min_interval": "6m", "max_age": "18y"},
+        {"label": "OPV กระตุ้น 2", "due": "4y", "min_age": "4y", "min_interval": "6m", "max_age": "18y"}
+      ]
+    },
+    {
+      "id": "ROTA",
+      "name": "โรต้า",
+      "doses": [
+        {"label": "Rota1", "due": "2m", "min_age": "6w", "max_age": "15w"},
+        {"label": "Rota2", "due": "4m", "min_age": "10w", "min_interval": "4w", "max_age": "8m"},
+        {"label": "Rota3", "due": "6m", "min_age": "14w", "min_interval": "4w", "max_age": "8m", "skip_products": ["RV1"]}
+      ]
+    },
+    {
+      "id": "PCV",
+      "name": "PCV (ปอดอักเสบ)",
+      "variants": [
+        {
+          "label": "เริ่มก่อนอายุ 7 เดือน",
+          "first_dose_before": "7m",
+          "doses": [
+            {"label": "PCV1", "due": "2m", "min_age": "6w", "max_age": "2y"},
+            {"label": "PCV2", "due": "4m", "min_age": "10w", "min_interval": "4w", "max_age": "5y"},
+            {"label": "PCV3 (กระตุ้น)", "due": "1y", "min_age": "1y", "min_interval": "8w", "max_age": "5y"}
+          ]
+        },
+        {
+          "label": "เริ่มอายุ 7–11 เดือน",
+          "first_dose_before": "1y",
+          "doses": [
+            {"label": "PCV1", "due": "7m", "min_age": "7m", "max_age": "2y"},
+            {"label": "PCV2", "due": "8m", "min_age": "7m", "min_interval": "4w", "max_age": "5y"},
+            {"label": "PCV3 (กระตุ้น)", "due": "1y", "min_age": "1y", "min_interval": "8w", "max_age": "5y"}
+          ]
+        },
+        {
+          "label": "เริ่มอายุ 12–23 เดือน",
+          "first_dose_before": "2y",
+          "doses": [
+            {"label": "PCV1", "due": "1y", "min_age": "1y", "max_age": "2y"},
+            {"label": "PCV2", "due": "1y2m", "min_age": "1y", "min_interval": "8w", "max_age": "5y"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MMR",
+      "name": "MMR (หัด คางทูม หัดเยอรมัน)",
+      "doses": [
+        {"label": "MMR1", "due": "9m", "min_age": "9m"},
+        {"label": "MMR2", "due": "1y6m", "min_age": "1y", "min_interval": "4w"}
+      ]
+    },
+    {
+      "id": "LAJE",
+      "name": "ไข้สมองอักเสบเจอี (LAJE)",
+      "doses": [
+        {"label": "LAJE1", "due": "1y", "min_age": "9m"},
+        {"label": "LAJE2", "due": "2y6m", "min_age": "1y", "min_interval": "3m"}
+      ]
+    },
+    {
+      "id": "HPV",
+      "name": "HPV (นักเรียนหญิง ป.5)",
+      "sex": "2",
+      "doses": [
+        {"label": "HPV", "due": "11y", "min_age": "9y", "overdue_age": "13y"}
+      ]
+    },
+    {
+      "id": "DT6",
+      "name": "dT (นักเรียน ป.6)",
+      "doses": [
+        {"label": "dT ป.6", "due": "12y", "min_age": "7y", "overdue_age": "13y"}
+      ]
+    }
+  ]
+}

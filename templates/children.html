@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>รายชื่อเด็กและสถานะวัคซีน</h1>
+    <p>เด็กในความรับผิดชอบ (อยู่ในเขต ยังไม่จำหน่าย) · อายุ ณ วันที่ {{ today|thai_date(false) }}</p></div>
+  <a class="btn" href="{{ export_url }}"><i class="ph ph-file-xls"></i>ส่งออก Excel</a>
+</div>
+
+<form class="card card-pad filters" method="get" action="/children">
+  <div class="tabs" role="tablist" aria-label="ช่วงวัย">
+    {% for key, (label, lo, hi) in AGE_BANDS.items() %}
+    <button class="tab" type="submit" name="band" value="{{ key }}" aria-selected="{{ 'true' if key == band else 'false' }}">{{ label }}</button>
+    {% endfor %}
+  </div>
+  <div class="inline-form">
+    <details class="dropdown">
+      <summary class="btn"><i class="ph ph-map-pin"></i><span data-empty="ทุกหมู่บ้าน"></span></summary>
+      <div class="dropdown-menu">
+        {% for v in villages %}
+        <label class="check"><input type="checkbox" name="village" value="{{ v.villcode }}" data-label="ม.{{ v.villno }}" {% if v.villcode in villcodes %}checked{% endif %}> ม.{{ v.villno }} {{ v.villname }}</label>
+        {% endfor %}
+      </div>
+    </details>
+    <div class="select-wrap">
+      <select class="input" name="status">
+        <option value="pending" {% if status == 'pending' %}selected{% endif %}>เฉพาะที่ค้างฉีด</option>
+        <option value="overdue" {% if status == 'overdue' %}selected{% endif %}>เฉพาะที่เลยกำหนด</option>
+        <option value="all" {% if status == 'all' %}selected{% endif %}>ทุกคน</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" type="submit" name="band" value="{{ band }}"><i class="ph ph-funnel"></i>แสดง</button>
+  </div>
+</form>
+
+<div class="card" style="margin-top:16px">
+  <div class="card-head"><h2>{{ AGE_BANDS[band][0] }}</h2><span class="muted small">{{ cards|length }} คน</span></div>
+  {% if cards %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>หมู่</th><th>ชื่อ</th><th>อายุ</th><th>วัคซีนที่ค้าง</th><th>นัดถัดไป</th></tr></thead>
+    <tbody>
+    {% for c in cards %}{% set p = c.person %}
+      <tr>
+        <td class="nowrap">ม.{{ p.villno }}{% if p.hno %}<div class="muted small">{{ p.hno }}</div>{% endif %}</td>
+        <td><a class="strong" href="/person/{{ p.pcucodeperson }}/{{ p.pid }}">{{ p.name }}</a>
+          <div class="muted small">HN {{ p.pid }}{% if p.mother %} · แม่ {{ p.mother }}{% endif %}{% if p.phone %} · {{ p.phone }}{% endif %}</div></td>
+        <td class="nowrap">{{ p.birth|age(today) }}<div class="muted small">{{ p.birth|thai_date }}</div></td>
+        <td>
+          {% for r, s in c.pending %}
+          <span class="badge {{ s.badge }}" title="{{ s.status_text }} · ควรได้ {{ s.due|thai_date }}">{% if s.status == "overdue" %}<i class="ph ph-warning"></i>{% endif %}{{ s.label }}</span>
+          {% else %}<span class="badge ok"><i class="ph ph-check"></i>ครบตามอายุ</span>{% endfor %}
+        </td>
+        <td class="nowrap">{% set a = appts.get((p.pcucodeperson, p.pid)) %}{{ a|thai_date if a else '-' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="empty"><i class="ph ph-confetti"></i><div>ไม่มีเด็กตามเงื่อนไขนี้</div></div>
+  {% endif %}
+</div>
+{% endblock %}

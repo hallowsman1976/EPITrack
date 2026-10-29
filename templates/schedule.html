@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>ตารางวัคซีน</h1>
+    <p>{{ rules.name }} · {% if is_default %}ใช้ตารางเริ่มต้นที่มากับโปรแกรม{% else %}ใช้ตารางที่ผู้ดูแลแก้ไข{% endif %}</p></div>
+</div>
+
+<div class="alert warn"><i class="ph ph-info"></i>
+  <div>ตารางเริ่มต้นเป็น <strong>ร่าง</strong> ที่เขียนจากตาราง EPI ของกระทรวงสาธารณสุข 2569 และกฎ catch-up ของ PCV ต้องให้ผู้รับผิดชอบงาน EPI ตรวจทานก่อนใช้งานจริง โดยเฉพาะลำดับ IPV/OPV ระยะห่าง LAJE และ HPV</div></div>
+
+<div class="card" style="margin-top:16px">
+  <div class="card-head"><h2><i class="ph ph-table"></i>สรุปกฎที่ใช้อยู่</h2></div>
+  <div class="table-wrap"><table class="table mini">
+    <thead><tr><th>ชุดวัคซีน</th><th>เข็ม</th><th>ควรได้</th><th>อายุต่ำสุด</th><th>ห่างจากเข็มก่อน</th><th>อายุสูงสุด</th><th>เลยกำหนดเมื่อ</th></tr></thead>
+    <tbody>
+    {% macro age(a) %}{% if a is none %}-{% else %}{% if a.years %}{{ a.years }} ปี {% endif %}{% if a.months %}{{ a.months }} ด. {% endif %}{% if a.days %}{% if a.days % 7 == 0 %}{{ a.days // 7 }} สัปดาห์{% else %}{{ a.days }} วัน{% endif %}{% endif %}{% if not (a.years or a.months or a.days) %}แรกเกิด{% endif %}{% endif %}{% endmacro %}
+    {% for s in rules.series %}{% for v in s.variants %}{% for d in v.doses %}
+      <tr>
+        <td>{% if loop.first %}<strong>{{ s.name }}</strong>{% if s.sex == '2' %} <span class="muted small">(หญิง)</span>{% endif %}{% if v.label %}<div class="muted small">{{ v.label }}</div>{% endif %}{% endif %}</td>
+        <td>{{ d.label }}{% if d.skip_products %} <span class="muted small">(ไม่ต้องถ้าเป็น {{ d.skip_products|join(', ') }})</span>{% endif %}</td>
+        <td>{{ age(d.due) }}</td><td>{{ age(d.min_age) }}</td><td>{{ age(d.min_interval) }}</td><td>{{ age(d.max_age) }}</td>
+        <td>{{ age(d.overdue_age) if d.overdue_age else 'ควรได้ + 1 เดือน' }}</td>
+      </tr>
+    {% endfor %}{% endfor %}{% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<form class="card" method="post" action="/admin/schedule" data-busy style="margin-top:16px">
+  <div class="card-head"><h2><i class="ph ph-code"></i>แก้ไขตาราง (JSON)</h2></div>
+  <div class="card-pad stack">
+    <p class="hint">อายุเขียนเป็น 0d, 6w, 2m, 1y6m · ค่า due, min_age, min_interval, max_age, overdue_age · ระบบตรวจรูปแบบก่อนบันทึก และเก็บฉบับเดิมไว้ในประวัติการแก้ไข</p>
+    <textarea class="input code json-editor" name="text" rows="24" spellcheck="false">{{ text }}</textarea>
+    <label class="field"><span>เหตุผลของการแก้ไข (จำเป็น)</span><input class="input" name="reason" required></label>
+    <div class="actions">
+      {% if not is_default %}<button class="btn btn-ghost" type="submit" name="action" value="reset" formnovalidate onclick="this.form.reason.value ||= 'กลับไปใช้ตารางเริ่มต้น'"><i class="ph ph-arrow-counter-clockwise"></i>กลับไปใช้ตารางเริ่มต้น</button>{% endif %}
+      <button class="btn btn-primary" type="submit" name="action" value="save"><i class="ph ph-floppy-disk"></i>บันทึกตาราง</button>
+    </div>
+  </div>
+</form>
+
+{% if logs %}
+<div class="card" style="margin-top:16px">
+  <div class="card-head"><h2>แก้ไขล่าสุด</h2></div>
+  <div class="table-wrap"><table class="table mini"><tbody>
+    {% for log in logs %}<tr><td class="nowrap">{{ log.at|thai_date }} {{ log.at.strftime('%H:%M') }}</td><td>{{ log.display_name }}</td><td>{{ ACTIONS.get(log.action, log.action) }}</td><td class="small">{{ log.reason }}</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+{% endif %}
+{% endblock %}

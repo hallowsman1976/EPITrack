@@ -1,0 +1,18 @@
+# ข้อมูลของแต่ละเครื่อง / ข้อมูลคนไข้ ห้ามเข้า git
+config.json
+backups/
+*.csv
+*.sql
+_previous/
+_update/
+release/
+update.log
+
+# สร้างใหม่ได้
+.venv/
+__pycache__/
+.pytest_cache/
+build/
+dist/
+session.key
+.dev-credentials.txt

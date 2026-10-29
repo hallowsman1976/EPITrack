@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>รอลง JHCIS</h1>
+    <p>การฉีดที่นี่ที่บันทึกในแอป แต่ยังไม่พบวัคซีนชุดเดียวกันในวันเดียวกันใน JHCIS · คีย์ใน JHCIS แล้วรายการจะหายจากหน้านี้เอง</p></div>
+</div>
+
+<form class="card card-pad inline-form" method="get" action="/pending">
+  <label class="field"><span>ฉีดตั้งแต่</span><input class="input" type="date" name="start" value="{{ start }}"></label>
+  <label class="field"><span>ถึง</span><input class="input" type="date" name="end" value="{{ end }}"></label>
+  <button class="btn btn-primary" type="submit"><i class="ph ph-funnel"></i>แสดง</button>
+</form>
+
+<div class="card" style="margin-top:16px">
+  <div class="card-head"><h2>{{ items|length }} รายการ</h2><span class="muted small">{{ start|thai_date }} – {{ end|thai_date }}</span></div>
+  {% if items %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>วันที่ฉีด</th><th>ชื่อ</th><th>วัคซีนที่ต้องคีย์</th><th>lot</th><th>สถานะ</th><th>ผู้บันทึก</th></tr></thead>
+    <tbody>
+    {% for it in items %}{% set r = it.record %}
+      <tr>
+        <td class="nowrap">{{ r.date_given|thai_date }}</td>
+        <td>{% if it.person %}<a class="strong" href="/person/{{ r.pcucodeperson }}/{{ r.pid }}#records">{{ it.person.name }}</a>
+          <div class="muted small">HN {{ r.pid }} · {{ it.person.idcard|cid }}</div>{% else %}HN {{ r.pid }}{% endif %}</td>
+        <td><span class="code">{{ r.vaccine_code }}</span> <span class="small">{{ names.get(r.vaccine_code, '') }}</span></td>
+        <td class="code small">{{ r.lot_no }}</td>
+        <td>{% set st = PENDING_STATUS[it.status] %}<span class="badge {{ st[1] }}">{{ st[0] }}</span>
+          {% if it.jhcis_dates %}<div class="muted small">JHCIS มีวันที่ {% for d in it.jhcis_dates %}{{ d|thai_date }}{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}</td>
+        <td class="small">{{ r.created_by_name or '-' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="empty"><i class="ph ph-check-circle"></i><div>ลง JHCIS ครบแล้วในช่วงนี้</div></div>
+  {% endif %}
+</div>
+{% endblock %}

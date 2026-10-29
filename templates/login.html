@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block bare %}
+<form class="card card-pad stack auth-card" method="post" action="/login" data-busy>
+  <div class="auth-brand"><div class="brand-mark"><i class="ph ph-syringe"></i></div><span class="brand-name">EPITrack</span></div>
+  <h1>เข้าสู่ระบบ</h1>
+  <input type="hidden" name="next" value="{{ next }}">
+  <label class="field"><span>ชื่อผู้ใช้</span>
+    <input class="input" name="username" value="{{ username or '' }}" required autofocus autocapitalize="off" autocomplete="username"></label>
+  <label class="field"><span>รหัสผ่าน</span>
+    <div class="input-group">
+      <input class="input" id="password" name="password" type="password" required autocomplete="current-password">
+      <button class="icon-btn" type="button" data-reveal="password" aria-label="แสดงรหัสผ่าน"><i class="ph ph-eye"></i></button>
+    </div></label>
+  <button class="btn btn-primary" type="submit"><i class="ph ph-sign-in"></i>เข้าสู่ระบบ</button>
+  <p class="hint">ลืมรหัสผ่าน ให้ผู้ดูแลตั้งรหัสผ่านใหม่ในหน้า "ผู้ใช้"</p>
+</form>
+{% endblock %}

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ title }} · EPITrack</title>
+  <script>
+    // ตั้งธีม/sidebar ก่อนวาดหน้า กันหน้ากระพริบ
+    (function () {
+      var r = document.documentElement, t = null, s = null;
+      try { t = localStorage.getItem("theme"); s = localStorage.getItem("sidebar"); } catch (e) {}
+      r.dataset.theme = t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      r.dataset.sidebar = s || "expanded";
+    })();
+  </script>
+  <link rel="stylesheet" href="/static/vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="/static/vendor/phosphor/regular/style.css">
+  <link rel="stylesheet" href="/static/vendor/phosphor/fill/style.css">
+  <link rel="stylesheet" href="/static/css/app.css?v=24">
+  <link rel="stylesheet" href="/static/css/epitrack.css?v=2">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230f766e'/><path d='M10 22l12-12M14 10l8 8M19 7l6 6M8 24l2-2' stroke='white' stroke-width='2.4' stroke-linecap='round'/></svg>">
+</head>
+<body>
+{% macro flash() %}
+  {% if msg %}<div class="alert ok flash" role="status"><i class="ph ph-check-circle"></i><div>{{ msg }}</div></div>{% endif %}
+  {% if err %}<div class="alert danger flash" role="alert"><i class="ph ph-warning-circle"></i><div>{{ err }}</div></div>{% endif %}
+{% endmacro %}
+{% if bare %}
+<main class="bare">
+  {{ flash() }}
+  {% block bare %}{% endblock %}
+</main>
+{% else %}
+{% set is_admin = user and user.role == "admin" %}
+{% set nav = [
+  ("home", "/", "magnifying-glass", "ค้นหาเด็ก", false),
+  ("children", "/children", "users-three", "รายชื่อและสถานะ", false),
+  ("pending", "/pending", "tray-arrow-up", "รอลง JHCIS", false),
+  ("users", "/admin/users", "user-gear", "ผู้ใช้", true),
+  ("schedule", "/admin/schedule", "calendar-check", "ตารางวัคซีน", true),
+  ("map", "/admin/map", "arrows-left-right", "mapping รหัสวัคซีน", true),
+  ("audit", "/admin/audit", "clock-counter-clockwise", "ประวัติการแก้ไข", true),
+  ("settings", "/settings", "gear-six", "ตั้งค่า", true),
+] %}
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="เมนูหลัก">
+    <div class="sidebar-head">
+      <div class="brand-mark"><i class="ph ph-syringe"></i></div>
+      <span class="brand-name">EPITrack</span>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">เมนู</div>
+      {% for key, href, icon, label, admin in nav if user and (not admin or is_admin) %}
+      {% if admin and loop.previtem is defined and not loop.previtem[4] %}<div class="nav-label">ผู้ดูแล</div>{% endif %}
+      <a class="nav-item" href="{{ href }}" title="{{ label }}" {% if active == key %}aria-current="page"{% endif %}>
+        <i class="ph ph-{{ icon }} ph-regular"></i><i class="ph-fill ph-{{ icon }}"></i>
+        <span class="nav-text">{{ label }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-foot">
+      <div class="version" title="EPITrack เวอร์ชัน {{ version }}">v{{ version }}</div>
+      <a class="conn" href="{{ '/settings' if is_admin else '#' }}" data-conn title="กำลังตรวจสอบ...">
+        <span class="dot"></span>
+        <span class="conn-text">
+          <span data-conn-msg>กำลังตรวจสอบ...</span>
+          <span>JHCIS {{ config.host }}:{{ config.port }}</span>
+        </span>
+      </a>
+    </div>
+  </aside>
+  <div class="backdrop" data-nav-close></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn only-mobile" data-nav-open aria-label="เปิดเมนู"><i class="ph ph-list"></i></button>
+      <button class="icon-btn only-desktop" data-sidebar-toggle aria-label="ย่อ/ขยายเมนู" title="ย่อ/ขยายเมนู"><i class="ph ph-sidebar-simple"></i></button>
+      <span class="topbar-title">{{ title }}</span>
+      <span class="topbar-spacer"></span>
+      {% if user %}
+      <details class="dropdown user-menu">
+        <summary class="btn btn-ghost"><i class="ph ph-user-circle"></i><span>{{ user.display_name }}</span></summary>
+        <div class="dropdown-menu">
+          <div class="muted small" style="padding:6px 10px">{{ ROLES[user.role] }} · {{ user.username }}</div>
+          <a class="btn btn-ghost" href="/account"><i class="ph ph-key"></i>เปลี่ยนรหัสผ่าน</a>
+          <form method="post" action="/logout"><button class="btn btn-ghost" type="submit"><i class="ph ph-sign-out"></i>ออกจากระบบ</button></form>
+        </div>
+      </details>
+      {% endif %}
+      <button class="icon-btn" data-theme-toggle aria-label="สลับโหมดมืด"><i class="ph ph-moon"></i></button>
+    </header>
+    <main class="content">
+      {% if is_admin and active != "updating" %}
+      <div class="alert ok update-banner" data-update-banner hidden>
+        <i class="ph ph-arrow-circle-up"></i>
+        <div class="update-body">
+          <strong>มีเวอร์ชันใหม่ v<span data-update-version></span></strong>
+          <span class="muted small" data-update-date></span>
+          <details class="update-notes"><summary>มีอะไรใหม่</summary><div data-update-notes></div></details>
+        </div>
+        <div class="update-actions">
+          <form method="post" action="/update/install" data-busy data-update-install>
+            <button class="btn btn-primary" type="submit"><i class="ph ph-download-simple"></i>อัปเดตเลย</button>
+          </form>
+          <button class="btn btn-ghost" type="button" data-update-later>ไว้ทีหลัง</button>
+        </div>
+      </div>
+      {% endif %}
+      {{ flash() }}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endif %}
+<script src="/static/js/app.js?v=23"></script>
+</body>
+</html>
